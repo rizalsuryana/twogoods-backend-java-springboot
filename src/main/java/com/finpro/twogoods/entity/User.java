@@ -1,10 +1,7 @@
 package com.finpro.twogoods.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,7 +10,8 @@ import java.util.Collection;
 import java.util.List;
 
 @Entity
-@Data
+@Getter
+@Setter
 @Table(name = "users")
 @NoArgsConstructor
 @AllArgsConstructor
@@ -21,7 +19,7 @@ import java.util.List;
 public class User extends BaseEntity implements UserDetails {
 
 	@Column(nullable = false, unique = true)
-	private String username; //email from student
+	private String email;
 
 	private String password;
 
@@ -30,6 +28,9 @@ public class User extends BaseEntity implements UserDetails {
 
 	@Column(nullable = false)
 	private boolean enabled = true;
+
+	@Column(name = "profile_picture")
+	private String profilePicture;
 
 
 
@@ -43,6 +44,11 @@ public class User extends BaseEntity implements UserDetails {
 	public boolean isAccountNonExpired() {
 //		return UserDetails.super.isAccountNonExpired();
 		return true;
+	}
+
+	@Override
+	public String getUsername() {
+		return email; // Spring Security pakai ini
 	}
 
 	@Override
