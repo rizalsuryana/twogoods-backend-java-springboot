@@ -2,6 +2,9 @@ package com.finpro.twogoods.service;
 
 import com.finpro.twogoods.dto.request.CustomerRegisterRequest;
 import com.finpro.twogoods.dto.request.MerchantRegisterRequest;
+import com.finpro.twogoods.dto.response.ApiResponse;
+import com.finpro.twogoods.dto.response.PagingResponse;
+import com.finpro.twogoods.dto.response.StatusResponse;
 import com.finpro.twogoods.dto.response.UserResponse;
 import com.finpro.twogoods.entity.CustomerProfile;
 import com.finpro.twogoods.entity.MerchantProfile;
@@ -33,7 +36,6 @@ public class UserService implements UserDetailsService {
 	private final CustomerProfileRepository customerProfileRepository;
 	private final MerchantProfileRepository merchantProfileRepository;
 
-
 	@Override
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 		log.debug("Loading user by email: {}", email);
@@ -41,6 +43,7 @@ public class UserService implements UserDetailsService {
 				new UsernameNotFoundException("Email or password is incorrect"));
 	}
 
+	// REGISTER CUSTOMER
 	@Transactional
 	public User createCustomer(CustomerRegisterRequest request) {
 
@@ -61,7 +64,6 @@ public class UserService implements UserDetailsService {
 			username = originalUsername + counter++;
 		}
 
-		// buat user
 		User user = User.builder()
 				.username(username)
 				.email(request.getEmail())
@@ -73,7 +75,6 @@ public class UserService implements UserDetailsService {
 
 		userRepository.save(user);
 
-		// buat customer profile
 		CustomerProfile profile = CustomerProfile.builder()
 				.user(user)
 				.location(request.getLocation())
@@ -84,7 +85,7 @@ public class UserService implements UserDetailsService {
 		return user;
 	}
 
-
+	// REGISTER MERCHANT
 	@Transactional
 	public User createMerchant(MerchantRegisterRequest request) {
 
@@ -105,7 +106,6 @@ public class UserService implements UserDetailsService {
 			username = originalUsername + counter++;
 		}
 
-		// buat user
 		User user = User.builder()
 				.username(username)
 				.email(request.getEmail())
@@ -117,7 +117,6 @@ public class UserService implements UserDetailsService {
 
 		userRepository.save(user);
 
-		// buat merchant profile
 		MerchantProfile profile = MerchantProfile.builder()
 				.user(user)
 				.location(request.getLocation())
@@ -130,8 +129,39 @@ public class UserService implements UserDetailsService {
 		return user;
 	}
 
-	public List<UserResponse> getAllUsers() {
-		return userRepository.findAll().stream()
+	// GET ALL USERS WITH PAGINATION + FILTER + SEARCH
+	public ApiResponse<List<UserResponse>> getAllUsers(int page, int size, String role, String search) {
+
+		// Ambil semua user dulu (filter & search sebelum pagination)
+		List<User> allUsers = userRepository.findAll();
+
+		// FILTER BY ROLE
+		if (role != null && !role.isEmpty()) {
+			allUsers = allUsers.stream()
+					.filter(u -> u.getRole().getRoleName().equalsIgnoreCase(role))
+					.toList();
+		}
+
+		// SEARCH BY NAME OR EMAIL
+		if (search != null && !search.isEmpty()) {
+			String keyword = search.toLowerCase();
+			allUsers = allUsers.stream()
+					.filter(u ->
+							(u.getFullName() != null && u.getFullName().toLowerCase().contains(keyword)) ||
+									(u.getEmail() != null && u.getEmail().toLowerCase().contains(keyword))
+					)
+					.toList();
+		}
+
+		int totalRows = allUsers.size();
+
+		// PAGINATION MANUAL
+		int start = page * size;
+		int end = Math.min(start + size, totalRows);
+
+		List<User> paginatedUsers = (start < end) ? allUsers.subList(start, end) : List.of();
+
+		List<UserResponse> userResponses = paginatedUsers.stream()
 				.map(user -> UserResponse.builder()
 						.id(user.getId())
 						.username(user.getUsername())
@@ -141,7 +171,22 @@ public class UserService implements UserDetailsService {
 						.profilePicture(user.getProfilePicture())
 						.build()
 				).toList();
+
+		int totalPages = (int) Math.ceil((double) totalRows / size);
+
+		PagingResponse paging = PagingResponse.builder()
+				.page(page)
+				.rowsPerPage(size)
+				.totalRows((long) totalRows)
+				.totalPages(totalPages)
+				.hasNext(page + 1 < totalPages)
+				.hasPrevious(page > 0)
+				.build();
+
+		return ApiResponse.<List<UserResponse>>builder()
+				.status(new StatusResponse(200, "Users fetched successfully"))
+				.data(userResponses)
+				.paging(paging)
+				.build();
 	}
-
-
 }
