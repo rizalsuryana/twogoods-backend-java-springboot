@@ -1,17 +1,17 @@
 package com.finpro.twogoods.entity;
 
-
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "merchat_profile")
+@Table(name = "merchant_profile")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class MerchantProfile {
+
 	@Id
 	private Long id; // sama dengan user_id
 
@@ -19,7 +19,6 @@ public class MerchantProfile {
 	private String NIK;
 
 	private int rating;
-
 
 	@OneToOne
 	@MapsId
