@@ -1,7 +1,7 @@
 package com.finpro.twogoods.security;
 
 import com.finpro.twogoods.entity.User;
-import com.finpro.twogoods.exception.JwtAuthenticationException;
+import com.finpro.twogoods.exceptions.JwtAuthenticationException;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -19,50 +19,50 @@ public class JwtTokenProvider {
 	@Value("${jwt.secret}")
 	private String jwtSecret;
 
-	@Value("${jwt.expiration}") // in seconds
+	@Value("${jwt.expiration}")
 	private Long jwtExpiration;
 
 	@Value("${jwt.issuer}")
 	private String jwtIssuer;
 
-	@Value("${jwt.refresh_expiration}") // in seconds
-	private Long jwtRefreshExpiration;
+	@Value("${jwt.refresh_expiration}")
+	private Long jwtRefreshToken;
 
-	private SecretKey getSigningKey () {
-		return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
-	}
-
-	public String generateToken (User user) {
+	public String generateToken(User user) {
 		return Jwts.builder()
-		           .subject(user.getEmail())
-		           .issuer(jwtIssuer)
-		           .issuedAt(new Date())
-		           .expiration(new Date(System.currentTimeMillis() + jwtExpiration * 1000))
-		           .claim("role", user.getRole().getRoleName())
-		           .signWith(getSigningKey())
-		           .compact();
+				.subject(user.getEmail()) // <-- pakai email
+				.issuer(jwtIssuer)
+				.issuedAt(new Date())
+				.expiration(new Date(new Date().getTime() + jwtExpiration))
+				.claim("role", user.getRole().getRoleName())
+				.signWith(getSigningKey())
+				.compact();
 	}
 
 	public boolean verifyToken(String token) {
 		try {
 			Jwts.parser()
-			    .verifyWith(getSigningKey())
-			    .build()
-			    .parseSignedClaims(token);
+					.verifyWith(getSigningKey())
+					.build()
+					.parseSignedClaims(token);
 			return true;
-		} catch ( ExpiredJwtException e) {
+		} catch (ExpiredJwtException e) {
 			throw new JwtAuthenticationException("Token has expired");
-		} catch ( JwtException e) {
+		} catch (JwtException e) {
 			throw new JwtAuthenticationException("Invalid token: " + e.getMessage());
 		}
 	}
 
+	private SecretKey getSigningKey() {
+		return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+	}
+
 	public String extractEmail(String token) {
 		return Jwts.parser()
-		           .verifyWith(getSigningKey())
-		           .build()
-		           .parseSignedClaims(token)
-		           .getPayload()
-		           .getSubject();
+				.verifyWith(getSigningKey())
+				.build()
+				.parseSignedClaims(token)
+				.getPayload()
+				.getSubject(); // <-- ini email
 	}
 }

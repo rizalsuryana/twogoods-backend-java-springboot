@@ -1,6 +1,6 @@
 package com.finpro.twogoods.entity;
 
-import com.finpro.twogoods.model.response.UserResponse;
+import com.finpro.twogoods.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -11,66 +11,60 @@ import java.util.Collection;
 import java.util.List;
 
 @Entity
-@Getter
-@Setter
 @Table(name = "users")
+@Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class User extends BaseEntity implements UserDetails {
+    @Column(nullable = false, unique = true)
+    private String username;
 
-	@Column(nullable = false, unique = true)
-	private String email;
+    private String password;
 
-	private String password;
+	@Column(name = "name", nullable = false)
+    private String fullName;
 
-	@Enumerated(EnumType.STRING)
-	private UserRole role;
-
-	@Column(nullable = false)
-    @Builder.Default
-	private boolean enabled = true;
+    @Column(unique = true)
+    private String email;
 
 	@Column(name = "profile_picture")
-	private String profilePicture;
+    private String profilePicture;
 
-    @Column(name = "location")
-    private String location;
+    @Enumerated(EnumType.STRING)
+    private UserRole role;
 
-	@Override
-	public Collection<? extends GrantedAuthority> getAuthorities() {
-		return List.of(new SimpleGrantedAuthority(role.getRoleName()));
-	}
+    @Column(nullable = false)
+    private boolean enabled = true;
 
+	@OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
+	private CustomerProfile customerProfile;
 
-	@Override
-	public boolean isAccountNonExpired() {
-//		return UserDetails.super.isAccountNonExpired();
-		return true;
-	}
+	@OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
+	private MerchantProfile merchantProfile;
 
-	@Override
-	public String getUsername() {
-		return email; // Spring Security pakai ini
-	}
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority(role.getRoleName()));
+    }
 
-	@Override
-	public boolean isAccountNonLocked() {
-//		return UserDetails.super.isAccountNonLocked();
-		return true;
-	}
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
 
-	@Override
-	public boolean isCredentialsNonExpired() {
-//		return UserDetails.super.isCredentialsNonExpired();
-		return true;
-	}
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
 
-	@Override
-	public boolean isEnabled() {
-//		untuk user verif email / baned
-//		return UserDetails.super.isEnabled();
-//		return isEnabled();
-		return enabled;
-	}
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
+    }
 }

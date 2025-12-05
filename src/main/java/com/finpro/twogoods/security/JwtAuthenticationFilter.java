@@ -1,7 +1,7 @@
 package com.finpro.twogoods.security;
 
 import com.finpro.twogoods.entity.User;
-import com.finpro.twogoods.exception.JwtAuthenticationException;
+import com.finpro.twogoods.exceptions.JwtAuthenticationException;
 import com.finpro.twogoods.service.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -22,44 +22,52 @@ import java.io.IOException;
 @RequiredArgsConstructor
 @Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private final JwtTokenProvider jwtTokenProvider;
-    private final UserService      userService;
 
-    @Override
-    protected void doFilterInternal(
-            @NonNull HttpServletRequest request,
-            @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain
-    ) throws ServletException, IOException {
-        try {
-            String header = request.getHeader("Authorization");
-            if (header == null || !header.startsWith("Bearer ")) {
-                filterChain.doFilter(request, response);
-                return;
-            }
-            String tokenJwt = header.substring(7);
+	private final JwtTokenProvider jwtTokenProvider;
+	private final UserService userService;
 
-            if (jwtTokenProvider.verifyToken(tokenJwt)) {
-                String username = jwtTokenProvider.extractEmail(tokenJwt);
-                if (username != null) {
-                    User user = (User) userService.loadUserByUsername(username);
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                            user,
-                            null,
-                            user.getAuthorities()
-                    );
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                }
-            }
-            filterChain.doFilter(request, response);
-        } catch ( JwtAuthenticationException e) {
-            log.error("JWT Authentication failed: {}", e.getMessage());
-            request.setAttribute("jwtException", e);
-            filterChain.doFilter(request, response);
-        } catch (Exception e) {
-            log.error("Cannot set user authentication: {}", e.getMessage());
-            filterChain.doFilter(request, response);
-        }
-    }
+	@Override
+	protected void doFilterInternal(
+			@NonNull HttpServletRequest request,
+			@NonNull HttpServletResponse response,
+			@NonNull FilterChain filterChain
+	) throws ServletException, IOException {
+		try {
+			String header = request.getHeader("Authorization");
+			if (header == null || !header.startsWith("Bearer ")) {
+				filterChain.doFilter(request, response);
+				return;
+			}
+
+			String tokenJwt = header.substring(7);
+
+			if (jwtTokenProvider.verifyToken(tokenJwt)) {
+				String email = jwtTokenProvider.extractEmail(tokenJwt);
+				log.debug("JWT subject (email) = {}", email);
+
+				if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+					User user = (User) userService.loadUserByUsername(email);
+
+					UsernamePasswordAuthenticationToken authentication =
+							new UsernamePasswordAuthenticationToken(
+									user,
+									null,
+									user.getAuthorities()
+							);
+
+					authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+					SecurityContextHolder.getContext().setAuthentication(authentication);
+				}
+			}
+
+			filterChain.doFilter(request, response);
+		} catch (JwtAuthenticationException e) {
+			log.error("JWT Authentication failed: {}", e.getMessage());
+			request.setAttribute("jwtException", e);
+			filterChain.doFilter(request, response);
+		} catch (Exception e) {
+			log.error("Cannot set user authentication: {}", e.getMessage());
+			filterChain.doFilter(request, response);
+		}
+	}
 }

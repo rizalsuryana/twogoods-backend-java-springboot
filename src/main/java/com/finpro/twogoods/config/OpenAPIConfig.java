@@ -12,11 +12,11 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @OpenAPIDefinition(
         info = @Info(
-                title = "2Goods",
+                title = "2Goods API",
                 version = "1.0",
                 contact = @Contact(
-                        name = "2Goods.inc",
-                        url = "https://enigmacamp.com"
+                        name = "2Goods",
+                        url = "http://localhost:5173"
                 )
         ),
         security = @SecurityRequirement(name = "bearerAuth")

@@ -1,81 +1,94 @@
 package com.finpro.twogoods.service;
 
-import com.finpro.twogoods.entity.*;
-import com.finpro.twogoods.model.request.*;
-import com.finpro.twogoods.model.response.LoginResponse;
-import com.finpro.twogoods.repository.UserRepository;
+import com.finpro.twogoods.dto.request.CustomerRegisterRequest;
+import com.finpro.twogoods.dto.request.LoginRequest;
+import com.finpro.twogoods.dto.request.MerchantRegisterRequest;
+import com.finpro.twogoods.dto.response.LoginResponse;
+import com.finpro.twogoods.dto.response.RegisterResponse;
+import com.finpro.twogoods.entity.User;
 import com.finpro.twogoods.security.JwtTokenProvider;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
+import com.finpro.twogoods.enums.UserRole;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-    private final JwtTokenProvider jwtTokenProvider;
-    private final AuthenticationManager authenticationManager;
-    private final UserRepository  userRepository;
-    private final PasswordEncoder passwordEncoder;
 
-    @Value("${twogoods.admin.username}")
-    private String ADMIN_USERNAME;
+	private final JwtTokenProvider jwtTokenProvider;
+	private final AuthenticationManager authenticationManager;
+	private final UserService userService;
 
-    @Value("${twogoods.admin.password}")
-    private String ADMIN_PASSWORD;
+	public LoginResponse login(LoginRequest request) {
 
-    public LoginResponse loginCustomer(LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword())
-        );
+		Authentication authentication = authenticationManager.authenticate(
+				new UsernamePasswordAuthenticationToken(
+						request.getEmail(),
+						request.getPassword()
+				)
+		);
 
-        Customer customer = (Customer ) authentication.getPrincipal();
+		User user = (User) authentication.getPrincipal();
+		String token = jwtTokenProvider.generateToken(user);
 
-        String token = jwtTokenProvider.generateToken(customer.getUser());
-        return LoginResponse.builder()
-                .accessToken(token)
-                .user(customer.toUserResponse())
-                .build();
-    }
+		// ambil location dari profile (customer/merchant)
+		String location = null;
+		if (user.getRole() == UserRole.CUSTOMER && user.getCustomerProfile() != null) {
+			location = user.getCustomerProfile().getLocation();
+		}
+		if (user.getRole() == UserRole.MERCHANT && user.getMerchantProfile() != null) {
+			location = user.getMerchantProfile().getLocation();
+		}
 
-    public LoginResponse loginMerchant(LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword())
-        );
+		LoginResponse.UserInfo userInfo = LoginResponse.UserInfo.builder()
+				.userId(user.getId())
+				.role(user.getRole().getRoleName())
+				.email(user.getEmail())
+				.name(user.getFullName())
+				.profilePicture(user.getProfilePicture())
+				.location(location)
+				.build();
 
-        Merchant merchant = (Merchant) authentication.getPrincipal();
-        String token = jwtTokenProvider.generateToken(merchant.getUser());
-
-        return LoginResponse.builder()
-                            .accessToken(token)
-                            .user(merchant.toUserResponse())
-                            .build();
-    }
+		return LoginResponse.builder()
+				.accessToken(token)
+				.tokenType("Bearer")
+				.user(userInfo)
+				.build();
+	}
 
 
-    @PostConstruct
-    public void adminSeeder() {
-        if(userRepository.existsByEmail(ADMIN_USERNAME)){
-            return;
-        }
+	// REGISTER CUSTOMER
+	public RegisterResponse registerCustomer(CustomerRegisterRequest request) {
+		log.info("Attempting to register CUSTOMER with email: {}", request.getEmail());
 
-        userRepository.save(User.builder()
-                                .email(ADMIN_USERNAME)
-                                .password(passwordEncoder.encode(ADMIN_PASSWORD))
-                                .role(UserRole.ADMIN)
-                                .enabled(true)
-                                .build()
-        );
-    }
+		User user = userService.createCustomer(request);
+
+		log.info("Customer registered successfully with username: {}", user.getUsername());
+
+		return RegisterResponse.builder()
+				.fullName(user.getFullName())
+				.email(user.getEmail())
+				.build();
+	}
+
+
+// REGISTER MERCHANT
+	public RegisterResponse registerMerchant(MerchantRegisterRequest request) {
+		log.info("Attempting to register MERCHANT with email: {}", request.getEmail());
+
+		User user = userService.createMerchant(request);
+
+		log.info("Merchant registered successfully with username: {}", user.getUsername());
+
+		return RegisterResponse.builder()
+				.fullName(user.getFullName())
+				.email(user.getEmail())
+				.build();
+	}
+
 }

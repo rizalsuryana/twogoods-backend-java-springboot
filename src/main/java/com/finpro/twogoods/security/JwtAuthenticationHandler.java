@@ -1,7 +1,7 @@
 package com.finpro.twogoods.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.finpro.twogoods.model.response.ErrorResponse;
+import com.finpro.twogoods.dto.response.ErrorResponse;
 import com.finpro.twogoods.utils.ResponseUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
