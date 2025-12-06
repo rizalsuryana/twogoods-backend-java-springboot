@@ -1,9 +1,15 @@
 package com.finpro.twogoods.seeder;
 
-import com.finpro.twogoods.entity.*;
+import com.finpro.twogoods.entity.CustomerProfile;
+import com.finpro.twogoods.entity.MerchantProfile;
+import com.finpro.twogoods.entity.Product;
+import com.finpro.twogoods.entity.User;
 import com.finpro.twogoods.enums.ProductCondition;
 import com.finpro.twogoods.enums.UserRole;
-import com.finpro.twogoods.repository.*;
+import com.finpro.twogoods.repository.CustomerProfileRepository;
+import com.finpro.twogoods.repository.MerchantProfileRepository;
+import com.finpro.twogoods.repository.ProductRepository;
+import com.finpro.twogoods.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,17 +25,17 @@ import java.util.List;
 @Transactional
 public class DataSeeder implements CommandLineRunner {
 
-	private final UserRepository            userRepository;
+	private final UserRepository userRepository;
 	private final MerchantProfileRepository merchantProfileRepository;
 	private final CustomerProfileRepository customerProfileRepository;
-	private final ProductRepository         productRepository;
-	private final PasswordEncoder           passwordEncoder;
+	private final ProductRepository productRepository;
+	private final PasswordEncoder passwordEncoder;
 
 	@Override
-	public void run (String... args) throws Exception {
+	public void run(String... args) throws Exception {
 
 		// Cegah duplikasi seeder
-		if ( userRepository.count() > 1 ) {
+		if (userRepository.count() > 1) {
 			return;
 		}
 
@@ -41,7 +47,8 @@ public class DataSeeder implements CommandLineRunner {
 		customerProfileRepository.saveAll(List.of(
 				CustomerProfile.builder().user(c1).build(),
 				CustomerProfile.builder().user(c2).build(),
-				CustomerProfile.builder().user(c3).build()));
+				CustomerProfile.builder().user(c3).build()
+												 ));
 
 		//	merchant x3
 		User m1 = createUser("merchant1@mail.com", "merch1", "Merchant One", UserRole.MERCHANT);
@@ -62,30 +69,30 @@ public class DataSeeder implements CommandLineRunner {
 		System.out.println("✅ Data seeder berhasil dijalankan!");
 	}
 
-	private User createUser (String email, String username, String name, UserRole role) {
+	private User createUser(String email, String username, String name, UserRole role) {
 		User user = User.builder()
-		                .email(email)
-		                .username(username)
-		                .fullName(name)
-		                .password(passwordEncoder.encode("password"))
-		                .role(role)
-		                .enabled(true)
-		                .build();
+						.email(email)
+						.username(username)
+						.fullName(name)
+						.password(passwordEncoder.encode("password"))
+						.role(role)
+						.enabled(true)
+						.build();
 		return userRepository.save(user);
 	}
 
-	private void createProductsForMerchant (MerchantProfile merchant, String baseName) {
-		for ( int i = 1; i <= 5; i++ ) {
+	private void createProductsForMerchant(MerchantProfile merchant, String baseName) {
+		for (int i = 1; i <= 5; i++) {
 			Product p = Product.builder()
-			                   .merchant(merchant)
-			                   .name(baseName + " " + i)
-			                   .description("Deskripsi produk " + baseName + " nomor " + i)
-			                   .price(BigDecimal.valueOf(50000 + ( i * 10000 )))
-			                   .category("fashion")
-			                   .color("random")
-			                   .isAvailable(true)
-			                   .condition(ProductCondition.USED)
-			                   .build();
+							   .merchant(merchant)
+							   .name(baseName + " " + i)
+							   .description("Deskripsi produk " + baseName + " nomor " + i)
+							   .price(BigDecimal.valueOf(50000 + (i * 10000)))
+							   .category("fashion")
+							   .color("random")
+							   .isAvailable(true)
+							   .condition(ProductCondition.USED)
+							   .build();
 
 			productRepository.save(p);
 		}

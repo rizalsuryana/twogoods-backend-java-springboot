@@ -124,6 +124,7 @@ public class UserService implements UserDetailsService {
 		return userRepository.findAllByRole(role);
 	}
 
+
 	private String validateUser (String request, String request1, String request2) {
 		if ( ! request.equals(request1) ) {
 			throw new IllegalArgumentException("Password and confirm password do not match");

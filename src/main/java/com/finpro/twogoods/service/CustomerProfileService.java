@@ -33,8 +33,8 @@ public class CustomerProfileService {
 		                                     .password(customerProfile.getUser().getPassword())
 		                                     .fullName(customerProfile.getUser().getFullName())
 		                                     .build();
-		profile.setLocation(customerProfile.getLocation());
 		userService.updateExistingUser(customerProfile.getUser(), userRequest);
+		profile.setLocation(customerProfile.getLocation());
 		return customerProfileRepository.save(profile);
 	}
 
