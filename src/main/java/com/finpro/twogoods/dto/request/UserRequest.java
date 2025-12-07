@@ -1,7 +1,5 @@
 package com.finpro.twogoods.dto.request;
 
-
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
@@ -10,19 +8,16 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CustomerRegisterRequest {
+public class UserRequest {
+	@NotBlank
+	private String password;
+
+	@NotBlank
+	private String email;
 
 	@NotBlank
 	private String fullName;
 
 	@NotBlank
-	@Email
-	private String email;
-
-	@NotBlank
-	private String password;
-
-	@NotBlank
-	private String confirmPassword;
-
+	private String profilePicture;
 }

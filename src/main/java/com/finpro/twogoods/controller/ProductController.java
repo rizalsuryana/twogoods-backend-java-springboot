@@ -3,6 +3,7 @@ package com.finpro.twogoods.controller;
 import com.finpro.twogoods.dto.request.ProductRequest;
 import com.finpro.twogoods.dto.response.ProductImageResponse;
 import com.finpro.twogoods.dto.response.ProductResponse;
+import com.finpro.twogoods.enums.Categories;
 import com.finpro.twogoods.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -36,7 +37,7 @@ public class ProductController {
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size,
 			@RequestParam(required = false) String search,
-			@RequestParam(required = false) String category
+			@RequestParam(required = false) Categories category
 	) {
 		return ResponseEntity.ok(productService.getProducts(page, size, search, category));
 	}

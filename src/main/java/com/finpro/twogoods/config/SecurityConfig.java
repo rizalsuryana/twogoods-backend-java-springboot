@@ -38,7 +38,11 @@ public class SecurityConfig {
 				                "/api/v1/auth/**",
 				                "/api/v1/users",
 				                "/api/v1/products",
-				                "/api/v1/products/**"
+				                "/api/v1/products/**",
+								"/api/v1/merchant",
+								"/api/v1/merchant/**",
+								"/api/v1/customers",
+								"/api/v1/customers/**"
 		                ).permitAll()
 		                .anyRequest().authenticated()
 

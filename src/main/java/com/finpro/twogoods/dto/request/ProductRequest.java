@@ -1,9 +1,11 @@
 package com.finpro.twogoods.dto.request;
 
+import com.finpro.twogoods.enums.Categories;
 import com.finpro.twogoods.enums.ProductCondition;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -20,7 +22,7 @@ public class ProductRequest {
 
 	private BigDecimal price;
 
-	private String category;
+	private List<Categories> categories;
 
 	private String color;
 

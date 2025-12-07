@@ -1,5 +1,8 @@
 package com.finpro.twogoods.dto.response;
 
+import com.finpro.twogoods.entity.CustomerProfile;
+import com.finpro.twogoods.entity.MerchantProfile;
+import com.finpro.twogoods.enums.UserRole;
 import lombok.*;
 
 @Getter
@@ -12,6 +15,8 @@ public class UserResponse {
 	private String username;
 	private String email;
 	private String fullName;
-	private String role;
+	private UserRole role;
 	private String profilePicture;
+	private MerchantProfile merchantProfile;
+	private CustomerProfile customerProfile;
 }

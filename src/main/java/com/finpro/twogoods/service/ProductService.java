@@ -6,6 +6,7 @@ import com.finpro.twogoods.dto.response.ProductResponse;
 import com.finpro.twogoods.entity.MerchantProfile;
 import com.finpro.twogoods.entity.Product;
 import com.finpro.twogoods.entity.ProductImage;
+import com.finpro.twogoods.enums.Categories;
 import com.finpro.twogoods.repository.MerchantProfileRepository;
 import com.finpro.twogoods.repository.ProductImageRepository;
 import com.finpro.twogoods.repository.ProductRepository;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,7 +38,7 @@ public class ProductService {
 				.name(request.getName())
 				.description(request.getDescription())
 				.price(request.getPrice())
-				.category(request.getCategory())
+				.categories(request.getCategories())
 				.color(request.getColor())
 				.isAvailable(request.isAvailable())
 				.condition(request.getCondition())
@@ -52,15 +54,15 @@ public class ProductService {
 		return toProductResponse(product);
 	}
 
-	public Page<ProductResponse> getProducts(int page, int size, String search, String category) {
+	public Page<ProductResponse> getProducts(int page, int size, String search, Categories category) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
 		Page<Product> result;
 
 		if (search != null && !search.isBlank()) {
 			result = productRepository.findByNameContainingIgnoreCase(search, pageable);
-		} else if (category != null && !category.isBlank()) {
-			result = productRepository.findByCategoryIgnoreCase(category, pageable);
+		} else if (category != null) {
+			result = productRepository.findByCategoriesContaining(category, pageable);
 		} else {
 			result = productRepository.findAll(pageable);
 		}
@@ -75,7 +77,7 @@ public class ProductService {
 		if (request.getName() != null) product.setName(request.getName());
 		if (request.getDescription() != null) product.setDescription(request.getDescription());
 		if (request.getPrice() != null) product.setPrice(request.getPrice());
-		if (request.getCategory() != null) product.setCategory(request.getCategory());
+		if (request.getCategories() != null) product.setCategories(request.getCategories());
 		if (request.getColor() != null) product.setColor(request.getColor());
 		product.setAvailable(request.isAvailable());
 		if (request.getCondition() != null) product.setCondition(request.getCondition());
@@ -152,7 +154,7 @@ public Page<ProductResponse> getAvailableProducts(int page, int size) {
 				.name(product.getName())
 				.description(product.getDescription())
 				.price(product.getPrice())
-				.category(product.getCategory())
+				.categories(product.getCategories())
 				.color(product.getColor())
 				.isAvailable(product.isAvailable())
 				.condition(product.getCondition())

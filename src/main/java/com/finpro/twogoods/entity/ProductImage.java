@@ -1,6 +1,7 @@
 package com.finpro.twogoods.entity;
 
 
+import com.finpro.twogoods.dto.response.ProductImageResponse;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,4 +18,11 @@ public class ProductImage extends BaseEntity {
 	private Product product;
 
 	private String imageUrl;
+
+	public ProductImageResponse toResponse() {
+		return ProductImageResponse.builder()
+								   .id(getId())
+								   .imageUrl(imageUrl)
+								   .build();
+	}
 }

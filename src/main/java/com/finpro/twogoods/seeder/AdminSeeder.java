@@ -17,19 +17,21 @@ public class AdminSeeder implements CommandLineRunner {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 
-	@Value("${admin.username}")
+	@Value("${admin.email}")
 	private String ADMIN_USERNAME;
 
 	@Value("${admin.password}")
 	private String ADMIN_PASSWORD;
 
+	@Value("${admin.fullname}")
+	private String ADMIN_FULLNAME;
 
 	@Override
 	public void run(String... args) {
 		if (userRepository.existsByUsername(ADMIN_USERNAME)) return;
 		userRepository.save(User.builder()
 				.username(ADMIN_USERNAME)
-				.fullName("Admin 2Goods")
+				.fullName(ADMIN_FULLNAME)
 				.email(ADMIN_USERNAME)
 				.password(passwordEncoder.encode(ADMIN_PASSWORD))
 				.role(UserRole.ADMIN)

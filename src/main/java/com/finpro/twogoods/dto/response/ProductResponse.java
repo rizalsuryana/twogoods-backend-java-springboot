@@ -1,5 +1,6 @@
 package com.finpro.twogoods.dto.response;
 
+import com.finpro.twogoods.enums.Categories;
 import com.finpro.twogoods.enums.ProductCondition;
 import lombok.*;
 
@@ -23,7 +24,7 @@ public class ProductResponse {
 
 	private BigDecimal price;
 
-	private String category;
+	private List<Categories> categories;
 
 	private String color;
 

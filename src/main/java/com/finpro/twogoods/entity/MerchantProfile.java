@@ -1,7 +1,10 @@
 package com.finpro.twogoods.entity;
 
+import com.finpro.twogoods.dto.response.MerchantProfileResponse;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.List;
 
 @Entity
 @Table(name = "merchant_profile")
@@ -18,7 +21,7 @@ public class MerchantProfile {
 	@Column(name = "nomor_ktp")
 	private String NIK;
 
-	private int rating;
+	private float rating;
 
 	@OneToOne
 	@MapsId
@@ -27,4 +30,22 @@ public class MerchantProfile {
 
 	@Column(nullable = false)
 	private String location;
+
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "merchant")
+	private List<Product> products;
+
+	public MerchantProfileResponse toResponse() {
+		return MerchantProfileResponse.builder()
+									  .id(id)
+									  .profilePicture(getUser().getProfilePicture())
+									  .role(getUser().getRole())
+									  .email(getUser().getEmail())
+									  .products(products == null
+												? null
+												: products.stream().map(Product::toResponse).toList())
+									  .fullName(getUser().getFullName())
+									  .location(getLocation())
+									  .rating(getRating())
+									  .build();
+	}
 }
