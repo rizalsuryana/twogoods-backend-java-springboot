@@ -114,7 +114,6 @@ public class ProductService {
 
 		Product product = productRepository.findById(id)
 				.orElseThrow(() -> new RuntimeException("Product not found"));
-
 		productRepository.delete(product);
 	}
 
@@ -127,9 +126,7 @@ public class ProductService {
 
 		Product product = productRepository.findById(productId)
 				.orElseThrow(() -> new RuntimeException("Product not found"));
-
 		String imageUrl = cloudinaryService.uploadImage(file);
-
 		ProductImage image = ProductImage.builder()
 				.product(product)
 				.imageUrl(imageUrl)

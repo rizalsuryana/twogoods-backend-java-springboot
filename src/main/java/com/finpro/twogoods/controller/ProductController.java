@@ -59,7 +59,7 @@ public class ProductController {
 		return ResponseEntity.noContent().build();
 	}
 
-	@PreAuthorize("hasRole('ADMIN') or (hasRole('MERCHANT') and @productService.isOwner(#id))")
+	@PreAuthorize("hasRole('ADMIN') or (hasRole('MERCHANT') and @productService.isOwner(#productId))")
 	@PostMapping("/{productId}/upload-image")
 	public ResponseEntity<ProductImageResponse> uploadProductImage(
 			@PathVariable Long productId,
