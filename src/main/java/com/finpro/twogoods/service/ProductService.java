@@ -19,6 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -184,10 +186,7 @@ public void deleteProductImage(Long imageId) {
 
 	ProductImage image = productImageRepository.findById(imageId)
 			.orElseThrow(() -> new RuntimeException("Image not found"));
-
-	// Optional: hapus dari Cloudinary kalau kamu mau
-	// cloudinaryService.deleteImage(image.getImageUrl());
-
+//	bisa ditambah hapus dari si cloudinary jg nanti
 	productImageRepository.delete(image);
 }
 
@@ -205,6 +204,41 @@ public void deleteProductImage(Long imageId) {
 
 	return merchantUserId.equals(user.getId());
 }
+
+
+	public List<ProductImageResponse> uploadMultipleImages(Long productId, MultipartFile[] files) throws IOException {
+
+		if (!isOwner(productId)) {
+			throw new AccessDeniedException("You can only upload images to your own product");
+		}
+
+		Product product = productRepository.findById(productId)
+				.orElseThrow(() -> new RuntimeException("Product not found"));
+
+		List<ProductImageResponse> responses = new ArrayList<>();
+
+		for (MultipartFile file : files) {
+//			String imageUrl = cloudinaryService.uploadImage(file);
+			String imageUrl = cloudinaryService.uploadImage(file, "products");
+
+			ProductImage image = ProductImage.builder()
+					.product(product)
+					.imageUrl(imageUrl)
+					.build();
+
+			ProductImage saved = productImageRepository.save(image);
+
+			responses.add(
+					ProductImageResponse.builder()
+							.id(saved.getId())
+							.imageUrl(saved.getImageUrl())
+							.build()
+			);
+		}
+
+		return responses;
+	}
+
 
 
 
