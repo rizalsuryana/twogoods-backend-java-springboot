@@ -76,4 +76,24 @@ public class ResponseUtil {
 
         return ResponseEntity.status(httpStatus).body(response);
     }
+
+
+	public static <T> ResponseEntity<ApiResponse<List<T>>> buildListResponse(
+			HttpStatus httpStatus,
+			String message,
+			List<T> data) {
+
+		StatusResponse status = StatusResponse.builder()
+				.code(httpStatus.value())
+				.description(message)
+				.build();
+
+		ApiResponse<List<T>> response = ApiResponse.<List<T>>builder()
+				.status(status)
+				.data(data)
+				.build();
+
+		return ResponseEntity.status(httpStatus).body(response);
+	}
+
 }

@@ -1,6 +1,7 @@
 package com.finpro.twogoods.controller;
 
 import com.finpro.twogoods.dto.response.ApiResponse;
+import com.finpro.twogoods.dto.response.MerchantProfileResponse;
 import com.finpro.twogoods.entity.MerchantProfile;
 import com.finpro.twogoods.entity.User;
 import com.finpro.twogoods.service.MerchantProfileService;
@@ -53,13 +54,13 @@ public class MerchantProfileController {
 
 	//  GET BY ID
 	@GetMapping("/{id}")
-	public ResponseEntity<ApiResponse<MerchantProfile>> getById(@PathVariable Long id) {
+	public ResponseEntity<ApiResponse<MerchantProfileResponse>> getById(@PathVariable Long id) {
 		MerchantProfile profile = merchantProfileService.getMerchantById(id);
 
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.OK,
 				"Merchant profile fetched successfully",
-				profile
+				profile.toResponse()
 		);
 	}
 
