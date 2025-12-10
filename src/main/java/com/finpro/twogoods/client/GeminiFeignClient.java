@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(
-		name = "gemini-feign-client",
-		url = "${gemini.api.url}",
-		configuration = GeminiFeignConfig.class
+				name = "gemini-feign-client",
+				url = "${gemini.api.url}",
+				configuration = GeminiFeignConfig.class
 )
 public interface GeminiFeignClient {
 	@PostMapping("/v1beta/models/gemini-2.5-flash:generateContent")

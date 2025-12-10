@@ -1,7 +1,6 @@
 // java
 package com.finpro.twogoods.dto.response;
 
-import com.finpro.twogoods.client.dto.MidtransAction;
 import lombok.Data;
 
 import java.util.List;
