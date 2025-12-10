@@ -22,7 +22,7 @@ public class CustomerProfileService {
 
 	public CustomerProfile getCustomerById(Long id) {
 		return customerProfileRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+										.orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
 	}
 
 	@Transactional(rollbackFor = Exception.class)
@@ -31,12 +31,12 @@ public class CustomerProfileService {
 		CustomerProfile profile = getCustomerById(id);
 
 		UserRequest userRequest = UserRequest.builder()
-				.profilePicture(customerProfile.getUser().getProfilePicture())
-				.email(customerProfile.getUser().getEmail())
-				.password(customerProfile.getUser().getPassword())
-				.fullName(customerProfile.getUser().getFullName())
-				.username(customerProfile.getUser().getUsername())
-				.build();
+											 .profilePicture(customerProfile.getUser().getProfilePicture())
+											 .email(customerProfile.getUser().getEmail())
+											 .password(customerProfile.getUser().getPassword())
+											 .fullName(customerProfile.getUser().getFullName())
+											 .username(customerProfile.getUser().getUsername())
+											 .build();
 
 		userService.updateUser(customerProfile.getUser().getId(), userRequest);
 
@@ -52,7 +52,8 @@ public class CustomerProfileService {
 	@Transactional(rollbackFor = Exception.class)
 	public void deleteCustomerProfileById(Long id) {
 		CustomerProfile profile = customerProfileRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+														   .orElseThrow(() -> new ResourceNotFoundException(
+																   "Customer not found"));
 
 		customerProfileRepository.delete(profile);
 	}

@@ -1,7 +1,9 @@
 package com.finpro.twogoods.dto.response;
 
 import com.finpro.twogoods.enums.OrderStatus;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 
@@ -13,5 +15,7 @@ public class TransactionResponse {
 	private Long merchantId;
 	private OrderStatus status;
 	private BigDecimal totalPrice;
+	private String midtransOrderId;
+	private String paymentUrl;
 }
 

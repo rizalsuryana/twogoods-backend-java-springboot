@@ -9,7 +9,7 @@ import lombok.*;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
-    private StatusResponse status;
-    private T data;
-    private PagingResponse paging;
+	private StatusResponse status;
+	private T data;
+	private PagingResponse paging;
 }

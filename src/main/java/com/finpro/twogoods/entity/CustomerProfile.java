@@ -1,7 +1,7 @@
 package com.finpro.twogoods.entity;
 
-import com.finpro.twogoods.dto.response.CustomerProfileResponse;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.finpro.twogoods.dto.response.CustomerProfileResponse;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -28,11 +28,11 @@ public class CustomerProfile {
 
 	public CustomerProfileResponse toResponse() {
 		return CustomerProfileResponse.builder()
-				.customerId(id)
-				.fullName(user != null ? user.getFullName() : null)
-				.email(user != null ? user.getEmail() : null)
-				.profilePicture(user != null ? user.getProfilePicture() : null)
-				.role(user != null ? user.getRole() : null)
-				.build();
+									  .customerId(id)
+									  .fullName(user != null ? user.getFullName() : null)
+									  .email(user != null ? user.getEmail() : null)
+									  .profilePicture(user != null ? user.getProfilePicture() : null)
+									  .role(user != null ? user.getRole() : null)
+									  .build();
 	}
 }

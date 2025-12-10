@@ -12,9 +12,9 @@ public class FilterHelper {
 		String roleStr = role.toUpperCase();
 
 		return users.stream()
-				.filter(u -> u.getRole() != null &&
-						u.getRole().name().equalsIgnoreCase(roleStr))
-				.toList();
+					.filter(u -> u.getRole() != null &&
+								 u.getRole().name().equalsIgnoreCase(roleStr))
+					.toList();
 	}
 
 	public static List<User> searchUsers(List<User> users, String keyword) {
@@ -23,11 +23,11 @@ public class FilterHelper {
 		String lower = keyword.toLowerCase();
 
 		return users.stream()
-				.filter(u ->
-						(u.getFullName() != null && u.getFullName().toLowerCase().contains(lower))
-								||
-								(u.getEmail() != null && u.getEmail().toLowerCase().contains(lower))
-				)
-				.toList();
+					.filter(u ->
+									(u.getFullName() != null && u.getFullName().toLowerCase().contains(lower))
+									||
+									(u.getEmail() != null && u.getEmail().toLowerCase().contains(lower))
+						   )
+					.toList();
 	}
 }

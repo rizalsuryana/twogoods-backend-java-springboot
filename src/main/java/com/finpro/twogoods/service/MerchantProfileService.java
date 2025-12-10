@@ -22,7 +22,7 @@ public class MerchantProfileService {
 
 	public MerchantProfile getMerchantById(Long id) {
 		return merchantProfileRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Merchant not found"));
+										.orElseThrow(() -> new ResourceNotFoundException("Merchant not found"));
 	}
 
 	@Transactional(rollbackFor = Exception.class)
@@ -31,12 +31,12 @@ public class MerchantProfileService {
 		MerchantProfile profile = getMerchantById(id);
 
 		UserRequest userRequest = UserRequest.builder()
-				.profilePicture(merchantProfile.getUser().getProfilePicture())
-				.email(merchantProfile.getUser().getEmail())
-				.password(merchantProfile.getUser().getPassword())
-				.fullName(merchantProfile.getUser().getFullName())
-				.username(merchantProfile.getUser().getUsername())
-				.build();
+											 .profilePicture(merchantProfile.getUser().getProfilePicture())
+											 .email(merchantProfile.getUser().getEmail())
+											 .password(merchantProfile.getUser().getPassword())
+											 .fullName(merchantProfile.getUser().getFullName())
+											 .username(merchantProfile.getUser().getUsername())
+											 .build();
 
 		userService.updateUser(merchantProfile.getUser().getId(), userRequest);
 
@@ -53,7 +53,8 @@ public class MerchantProfileService {
 	@Transactional(rollbackFor = Exception.class)
 	public void deleteMerchantProfileById(Long id) {
 		MerchantProfile profile = merchantProfileRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Merchant not found"));
+														   .orElseThrow(() -> new ResourceNotFoundException(
+																   "Merchant not found"));
 
 		merchantProfileRepository.delete(profile);
 	}

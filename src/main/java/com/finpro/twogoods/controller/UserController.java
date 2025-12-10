@@ -1,12 +1,16 @@
 package com.finpro.twogoods.controller;
 
+import com.finpro.twogoods.dto.request.SearchUserRequest;
 import com.finpro.twogoods.dto.request.UserRequest;
 import com.finpro.twogoods.dto.response.ApiResponse;
 import com.finpro.twogoods.dto.response.StatusResponse;
 import com.finpro.twogoods.dto.response.UserResponse;
 import com.finpro.twogoods.entity.User;
+import com.finpro.twogoods.enums.UserRole;
 import com.finpro.twogoods.service.UserService;
+import com.finpro.twogoods.utils.ResponseUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
@@ -23,14 +27,20 @@ public class UserController {
 	private final UserService userService;
 
 	@GetMapping
-	public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers(
+	public ResponseEntity<?> getAllUsers(
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size,
-			@RequestParam(required = false) String role,
+			@RequestParam(required = false) UserRole role,
 			@RequestParam(required = false) String search
 	) {
-		ApiResponse<List<UserResponse>> response = userService.getAllUsers(page, size, role, search);
-		return ResponseEntity.ok(response);
+		SearchUserRequest request = SearchUserRequest.builder()
+				.fullName(search)
+				.role(role)
+													 .build();
+		return ResponseUtil.buildPageResponse(HttpStatus.OK,
+											  HttpStatus.OK.getReasonPhrase(),
+											  userService.getAllUsers(page, size,request)
+											  );
 	}
 
 	@GetMapping("/me")

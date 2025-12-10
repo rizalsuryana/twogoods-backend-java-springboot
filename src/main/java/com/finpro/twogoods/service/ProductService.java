@@ -12,7 +12,10 @@ import com.finpro.twogoods.repository.MerchantProfileRepository;
 import com.finpro.twogoods.repository.ProductImageRepository;
 import com.finpro.twogoods.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -36,26 +39,27 @@ public class ProductService {
 	public ProductResponse createProduct(ProductRequest request) {
 
 		User user = (User) SecurityContextHolder.getContext()
-				.getAuthentication()
-				.getPrincipal();
+												.getAuthentication()
+												.getPrincipal();
 
 		if (!user.getRole().name().equals("MERCHANT")) {
 			throw new AccessDeniedException("Only MERCHANT can create products");
 		}
 
 		MerchantProfile merchant = merchantProfileRepository.findByUser(user)
-				.orElseThrow(() -> new RuntimeException("Merchant profile not found"));
+															.orElseThrow(() -> new RuntimeException(
+																	"Merchant profile not found"));
 
 		Product product = Product.builder()
-				.merchant(merchant)
-				.name(request.getName())
-				.description(request.getDescription())
-				.price(request.getPrice())
-				.categories(request.getCategories())
-				.color(request.getColor())
-				.isAvailable(request.isAvailable())
-				.condition(request.getCondition())
-				.build();
+								 .merchant(merchant)
+								 .name(request.getName())
+								 .description(request.getDescription())
+								 .price(request.getPrice())
+								 .categories(request.getCategories())
+								 .color(request.getColor())
+								 .isAvailable(request.isAvailable())
+								 .condition(request.getCondition())
+								 .build();
 
 		Product saved = productRepository.save(product);
 		return toProductResponse(saved);
@@ -64,7 +68,7 @@ public class ProductService {
 	//   GET PRODUCT BY ID
 	public ProductResponse getProductById(Long id) {
 		Product product = productRepository.findById(id)
-				.orElseThrow(() -> new RuntimeException("Product not found"));
+										   .orElseThrow(() -> new RuntimeException("Product not found"));
 		return toProductResponse(product);
 	}
 
@@ -76,9 +80,11 @@ public class ProductService {
 
 		if (search != null && !search.isBlank()) {
 			result = productRepository.findByNameContainingIgnoreCase(search, pageable);
-		} else if (category != null) {
+		}
+		else if (category != null) {
 			result = productRepository.findByCategoriesContaining(category, pageable);
-		} else {
+		}
+		else {
 			result = productRepository.findAll(pageable);
 		}
 
@@ -93,7 +99,7 @@ public class ProductService {
 		}
 
 		Product product = productRepository.findById(id)
-				.orElseThrow(() -> new RuntimeException("Product not found"));
+										   .orElseThrow(() -> new RuntimeException("Product not found"));
 
 		if (request.getName() != null) product.setName(request.getName());
 		if (request.getDescription() != null) product.setDescription(request.getDescription());
@@ -115,7 +121,7 @@ public class ProductService {
 		}
 
 		Product product = productRepository.findById(id)
-				.orElseThrow(() -> new RuntimeException("Product not found"));
+										   .orElseThrow(() -> new RuntimeException("Product not found"));
 		productRepository.delete(product);
 	}
 
@@ -127,31 +133,31 @@ public class ProductService {
 		}
 
 		Product product = productRepository.findById(productId)
-				.orElseThrow(() -> new RuntimeException("Product not found"));
+										   .orElseThrow(() -> new RuntimeException("Product not found"));
 //		String imageUrl = cloudinaryService.uploadImage(file);
 		String imageUrl = cloudinaryService.uploadImage(file, "products");
 		ProductImage image = ProductImage.builder()
-				.product(product)
-				.imageUrl(imageUrl)
-				.build();
+										 .product(product)
+										 .imageUrl(imageUrl)
+										 .build();
 
 		ProductImage saved = productImageRepository.save(image);
 
 		return ProductImageResponse.builder()
-				.id(saved.getId())
-				.imageUrl(saved.getImageUrl())
-				.build();
+								   .id(saved.getId())
+								   .imageUrl(saved.getImageUrl())
+								   .build();
 	}
 
 	//   CHECK OWNER
 	public boolean isOwner(Long productId) {
 
 		User user = (User) SecurityContextHolder.getContext()
-				.getAuthentication()
-				.getPrincipal();
+												.getAuthentication()
+												.getPrincipal();
 
 		Product product = productRepository.findById(productId)
-				.orElse(null);
+										   .orElse(null);
 
 		if (product == null) return false;
 
@@ -163,7 +169,7 @@ public class ProductService {
 	//   GET PRODUCTS BY MERCHANT
 	public Page<ProductResponse> getProductsByMerchant(Long merchantId, int page, int size) {
 		MerchantProfile merchant = merchantProfileRepository.findById(merchantId)
-				.orElseThrow(() -> new RuntimeException("Merchant not found"));
+															.orElseThrow(() -> new RuntimeException("Merchant not found"));
 
 		Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
@@ -181,29 +187,29 @@ public class ProductService {
 		return result.map(this::toProductResponse);
 	}
 
-//	Delete
-public void deleteProductImage(Long imageId) {
+	//	Delete
+	public void deleteProductImage(Long imageId) {
 
-	ProductImage image = productImageRepository.findById(imageId)
-			.orElseThrow(() -> new RuntimeException("Image not found"));
+		ProductImage image = productImageRepository.findById(imageId)
+												   .orElseThrow(() -> new RuntimeException("Image not found"));
 //	bisa ditambah hapus dari si cloudinary jg nanti
-	productImageRepository.delete(image);
-}
+		productImageRepository.delete(image);
+	}
 
 	public boolean isOwnerByImage(Long imageId) {
-	User user = (User) SecurityContextHolder.getContext()
-			.getAuthentication()
-			.getPrincipal();
+		User user = (User) SecurityContextHolder.getContext()
+												.getAuthentication()
+												.getPrincipal();
 
-	ProductImage image = productImageRepository.findById(imageId)
-			.orElse(null);
+		ProductImage image = productImageRepository.findById(imageId)
+												   .orElse(null);
 
-	if (image == null) return false;
+		if (image == null) return false;
 
-	Long merchantUserId = image.getProduct().getMerchant().getUser().getId();
+		Long merchantUserId = image.getProduct().getMerchant().getUser().getId();
 
-	return merchantUserId.equals(user.getId());
-}
+		return merchantUserId.equals(user.getId());
+	}
 
 
 	public List<ProductImageResponse> uploadMultipleImages(Long productId, MultipartFile[] files) throws IOException {
@@ -213,7 +219,7 @@ public void deleteProductImage(Long imageId) {
 		}
 
 		Product product = productRepository.findById(productId)
-				.orElseThrow(() -> new RuntimeException("Product not found"));
+										   .orElseThrow(() -> new RuntimeException("Product not found"));
 
 		List<ProductImageResponse> responses = new ArrayList<>();
 
@@ -222,46 +228,43 @@ public void deleteProductImage(Long imageId) {
 			String imageUrl = cloudinaryService.uploadImage(file, "products");
 
 			ProductImage image = ProductImage.builder()
-					.product(product)
-					.imageUrl(imageUrl)
-					.build();
+											 .product(product)
+											 .imageUrl(imageUrl)
+											 .build();
 
 			ProductImage saved = productImageRepository.save(image);
 
 			responses.add(
 					ProductImageResponse.builder()
-							.id(saved.getId())
-							.imageUrl(saved.getImageUrl())
-							.build()
-			);
+										.id(saved.getId())
+										.imageUrl(saved.getImageUrl())
+										.build()
+						 );
 		}
 
 		return responses;
 	}
 
 
-
-
-
 	//  MAPPER
 	private ProductResponse toProductResponse(Product product) {
 		return ProductResponse.builder()
-				.id(product.getId())
-				.merchantId(product.getMerchant().getId())
-				.name(product.getName())
-				.description(product.getDescription())
-				.price(product.getPrice())
-				.categories(product.getCategories())
-				.color(product.getColor())
-				.isAvailable(product.isAvailable())
-				.condition(product.getCondition())
-				.images(product.getImages() == null ? null :
-						product.getImages().stream()
-								.map(img -> ProductImageResponse.builder()
-										.id(img.getId())
-										.imageUrl(img.getImageUrl())
-										.build())
-								.collect(Collectors.toList()))
-				.build();
+							  .id(product.getId())
+							  .merchantId(product.getMerchant().getId())
+							  .name(product.getName())
+							  .description(product.getDescription())
+							  .price(product.getPrice())
+							  .categories(product.getCategories())
+							  .color(product.getColor())
+							  .isAvailable(product.isAvailable())
+							  .condition(product.getCondition())
+							  .images(product.getImages() == null ? null :
+									  product.getImages().stream()
+											 .map(img -> ProductImageResponse.builder()
+																			 .id(img.getId())
+																			 .imageUrl(img.getImageUrl())
+																			 .build())
+											 .collect(Collectors.toList()))
+							  .build();
 	}
 }

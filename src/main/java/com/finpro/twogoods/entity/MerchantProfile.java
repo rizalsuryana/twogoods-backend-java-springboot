@@ -1,7 +1,7 @@
 package com.finpro.twogoods.entity;
 
-import com.finpro.twogoods.dto.response.MerchantProfileResponse;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.finpro.twogoods.dto.response.MerchantProfileResponse;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -37,19 +37,18 @@ public class MerchantProfile {
 	private List<Product> products;
 
 
-
 	public MerchantProfileResponse toResponse() {
 		return MerchantProfileResponse.builder()
-				.id(id)
-				.rating(rating)
-				.location(location)
-				.fullName(user != null ? user.getFullName() : null)
-				.email(user != null ? user.getEmail() : null)
-				.profilePicture(user != null ? user.getProfilePicture() : null)
-				.role(user != null ? user.getRole() : null)
-				.products(products == null
-						? null
-						: products.stream().map(Product::toResponse).toList())
-				.build();
+									  .id(id)
+									  .rating(rating)
+									  .location(location)
+									  .fullName(user != null ? user.getFullName() : null)
+									  .email(user != null ? user.getEmail() : null)
+									  .profilePicture(user != null ? user.getProfilePicture() : null)
+									  .role(user != null ? user.getRole() : null)
+									  .products(products == null
+												? null
+												: products.stream().map(Product::toResponse).toList())
+									  .build();
 	}
 }

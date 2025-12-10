@@ -28,17 +28,24 @@ public class Transaction extends BaseEntity {
 
 	private BigDecimal totalPrice;
 
+	@Column(name = "midtrans_order_id")
+	private String midtransOrderId;
+
+	@Column(name = "payment_url")
+	private String paymentUrl;
 
 
-//
-public TransactionResponse toResponse() {
-	return TransactionResponse.builder()
-			.id(getId())
-			.customerId(customer != null ? customer.getId() : null)
-			.merchantId(merchant != null ? merchant.getId() : null)
-			.status(status)
-			.totalPrice(totalPrice)
-			.build();
-}
+	public TransactionResponse toResponse() {
+		return TransactionResponse.builder()
+								  .id(getId())
+								  .customerId(customer != null ? customer.getId() : null)
+								  .merchantId(merchant != null ? merchant.getId() : null)
+								  .status(status)
+								  .totalPrice(totalPrice)
+								  .paymentUrl(paymentUrl)
+								  .midtransOrderId(midtransOrderId)
+								  .build();
+	}
+
 
 }

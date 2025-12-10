@@ -30,21 +30,21 @@ public class JwtTokenProvider {
 
 	public String generateToken(User user) {
 		return Jwts.builder()
-				.subject(user.getEmail()) // <-- pakai email
-				.issuer(jwtIssuer)
-				.issuedAt(new Date())
-				.expiration(new Date(new Date().getTime() + jwtExpiration))
-				.claim("role", user.getRole().getRoleName())
-				.signWith(getSigningKey())
-				.compact();
+				   .subject(user.getEmail()) // <-- pakai email
+				   .issuer(jwtIssuer)
+				   .issuedAt(new Date())
+				   .expiration(new Date(new Date().getTime() + jwtExpiration))
+				   .claim("role", user.getRole().getRoleName())
+				   .signWith(getSigningKey())
+				   .compact();
 	}
 
 	public boolean verifyToken(String token) {
 		try {
 			Jwts.parser()
-					.verifyWith(getSigningKey())
-					.build()
-					.parseSignedClaims(token);
+				.verifyWith(getSigningKey())
+				.build()
+				.parseSignedClaims(token);
 			return true;
 		} catch (ExpiredJwtException e) {
 			throw new JwtAuthenticationException("Token has expired");
@@ -59,10 +59,10 @@ public class JwtTokenProvider {
 
 	public String extractEmail(String token) {
 		return Jwts.parser()
-				.verifyWith(getSigningKey())
-				.build()
-				.parseSignedClaims(token)
-				.getPayload()
-				.getSubject(); // <-- ini email
+				   .verifyWith(getSigningKey())
+				   .build()
+				   .parseSignedClaims(token)
+				   .getPayload()
+				   .getSubject(); // <-- ini email
 	}
 }
