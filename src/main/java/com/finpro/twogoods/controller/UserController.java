@@ -2,11 +2,13 @@ package com.finpro.twogoods.controller;
 
 import com.finpro.twogoods.dto.request.UserRequest;
 import com.finpro.twogoods.dto.response.ApiResponse;
-import com.finpro.twogoods.dto.response.StatusResponse;
 import com.finpro.twogoods.dto.response.UserResponse;
 import com.finpro.twogoods.entity.User;
 import com.finpro.twogoods.service.UserService;
+import com.finpro.twogoods.utils.ResponseUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
@@ -29,18 +31,21 @@ public class UserController {
 			@RequestParam(required = false) String role,
 			@RequestParam(required = false) String search
 	) {
-		ApiResponse<List<UserResponse>> response = userService.getAllUsers(page, size, role, search);
-		return ResponseEntity.ok(response);
+		Page<UserResponse> users = userService.getAllUsers(page, size, role, search);
+		return ResponseUtil.buildPagedResponse(
+				HttpStatus.OK,
+				"Users fetched successfully",
+				users
+		);
 	}
 
 	@GetMapping("/me")
 	public ResponseEntity<ApiResponse<UserResponse>> getMe() {
 		UserResponse me = userService.getMe();
-		return ResponseEntity.ok(
-				ApiResponse.<UserResponse>builder()
-						.status(new StatusResponse(200, "Current user fetched successfully"))
-						.data(me)
-						.build()
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				"Current user fetched successfully",
+				me
 		);
 	}
 
@@ -52,18 +57,16 @@ public class UserController {
 	) {
 		User user = (User) auth.getPrincipal();
 
-		// User hanya boleh update dirinya sendiri
 		if (!user.getId().equals(id)) {
 			throw new AccessDeniedException("You can only update your own account");
 		}
 
 		User updated = userService.updateUser(id, request);
 
-		return ResponseEntity.ok(
-				ApiResponse.<UserResponse>builder()
-						.status(new StatusResponse(200, "User updated successfully"))
-						.data(updated.toResponse())
-						.build()
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				"User updated successfully",
+				updated.toResponse()
 		);
 	}
 
@@ -75,18 +78,17 @@ public class UserController {
 	) {
 		User user = (User) auth.getPrincipal();
 
-		// User hanya boleh update foto dirinya sendiri
 		if (!user.getId().equals(id)) {
 			throw new AccessDeniedException("You can only update your own profile picture");
 		}
 
 		User updated = userService.updateProfilePicture(id, file);
 
-		return ResponseEntity.ok(
-				ApiResponse.<UserResponse>builder()
-						.status(new StatusResponse(200, "Profile picture updated successfully"))
-						.data(updated.toResponse())
-						.build()
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				"Profile picture updated successfully",
+				updated.toResponse()
 		);
 	}
 }
+

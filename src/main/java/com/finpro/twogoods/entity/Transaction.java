@@ -38,6 +38,8 @@ public TransactionResponse toResponse() {
 			.merchantId(merchant != null ? merchant.getId() : null)
 			.status(status)
 			.totalPrice(totalPrice)
+			.createdAt(getCreatedAt())
+			.updatedAt(getUpdatedAt())
 			.build();
 }
 

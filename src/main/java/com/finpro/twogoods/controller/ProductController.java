@@ -1,12 +1,15 @@
 package com.finpro.twogoods.controller;
 
 import com.finpro.twogoods.dto.request.ProductRequest;
+import com.finpro.twogoods.dto.response.ApiResponse;
 import com.finpro.twogoods.dto.response.ProductImageResponse;
 import com.finpro.twogoods.dto.response.ProductResponse;
 import com.finpro.twogoods.enums.Categories;
 import com.finpro.twogoods.service.ProductService;
+import com.finpro.twogoods.utils.ResponseUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -23,84 +26,145 @@ public class ProductController {
 	private final ProductService productService;
 
 	@PreAuthorize("hasRole('ADMIN') or hasRole('MERCHANT')")
-//			"and @productService.isOwner(#id))")
 	@PostMapping
-	public ResponseEntity<ProductResponse> createProduct(@RequestBody ProductRequest request) {
-		return ResponseEntity.ok(productService.createProduct(request));
+	public ResponseEntity<ApiResponse<ProductResponse>> createProduct(
+			@RequestBody ProductRequest request
+	) {
+		ProductResponse response = productService.createProduct(request);
+
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				"Product created successfully",
+				response
+		);
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<ProductResponse> getProduct(@PathVariable Long id) {
-		return ResponseEntity.ok(productService.getProductById(id));
+	public ResponseEntity<ApiResponse<ProductResponse>> getProduct(@PathVariable Long id) {
+		ProductResponse response = productService.getProductById(id);
+
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				"Product fetched successfully",
+				response
+		);
 	}
 
 	@GetMapping
-	public ResponseEntity<Page<ProductResponse>> getProducts(
+	public ResponseEntity<ApiResponse<List<ProductResponse>>> getProducts(
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size,
 			@RequestParam(required = false) String search,
 			@RequestParam(required = false) Categories category
 	) {
-		return ResponseEntity.ok(productService.getProducts(page, size, search, category));
+		Page<ProductResponse> products = productService.getProducts(page, size, search, category);
+
+		return ResponseUtil.buildPagedResponse(
+				HttpStatus.OK,
+				"Products fetched successfully",
+				products
+		);
 	}
 
 	@PreAuthorize("hasRole('ADMIN') or (hasRole('MERCHANT') and @productService.isOwner(#id))")
 	@PutMapping("/{id}")
-	public ResponseEntity<ProductResponse> updateProduct(
+	public ResponseEntity<ApiResponse<ProductResponse>> updateProduct(
 			@PathVariable Long id,
 			@RequestBody ProductRequest request
 	) {
-		return ResponseEntity.ok(productService.updateProduct(id, request));
+		ProductResponse response = productService.updateProduct(id, request);
+
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				"Product updated successfully",
+				response
+		);
 	}
 
 	@PreAuthorize("hasRole('ADMIN') or (hasRole('MERCHANT') and @productService.isOwner(#id))")
 	@DeleteMapping("/{id}")
-	public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+	public ResponseEntity<ApiResponse<Void>> deleteProduct(@PathVariable Long id) {
 		productService.deleteProduct(id);
-		return ResponseEntity.noContent().build();
+
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.NO_CONTENT,
+				"Product deleted successfully",
+				null
+		);
 	}
 
 	@PreAuthorize("hasRole('ADMIN') or (hasRole('MERCHANT') and @productService.isOwner(#productId))")
 	@PostMapping("/{productId}/upload-image")
-	public ResponseEntity<ProductImageResponse> uploadProductImage(
+	public ResponseEntity<ApiResponse<ProductImageResponse>> uploadProductImage(
 			@PathVariable Long productId,
 			@RequestParam("file") MultipartFile file
 	) throws IOException {
-		return ResponseEntity.ok(productService.uploadProductImage(productId, file));
+
+		ProductImageResponse response = productService.uploadProductImage(productId, file);
+
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				"Product image uploaded successfully",
+				response
+		);
 	}
 
 	@PreAuthorize("hasAnyRole('ADMIN','MERCHANT')")
 	@GetMapping("/merchant/{merchantId}")
-	public ResponseEntity<Page<ProductResponse>> getProductsByMerchant(
+	public ResponseEntity<ApiResponse<List<ProductResponse>>> getProductsByMerchant(
 			@PathVariable Long merchantId,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size
 	) {
-		return ResponseEntity.ok(productService.getProductsByMerchant(merchantId, page, size));
+		Page<ProductResponse> products = productService.getProductsByMerchant(merchantId, page, size);
+
+		return ResponseUtil.buildPagedResponse(
+				HttpStatus.OK,
+				"Merchant products fetched successfully",
+				products
+		);
 	}
 
 	@GetMapping("/available")
-	public ResponseEntity<Page<ProductResponse>> getAvailableProducts(
+	public ResponseEntity<ApiResponse<List<ProductResponse>>> getAvailableProducts(
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size
 	) {
-		return ResponseEntity.ok(productService.getAvailableProducts(page, size));
+		Page<ProductResponse> products = productService.getAvailableProducts(page, size);
+
+		return ResponseUtil.buildPagedResponse(
+				HttpStatus.OK,
+				"Available products fetched successfully",
+				products
+		);
 	}
 
 	@PreAuthorize("hasRole('ADMIN') or (hasRole('MERCHANT') and @productService.isOwnerByImage(#imageId))")
 	@DeleteMapping("/images/{imageId}")
-	public ResponseEntity<Void> deleteProductImage(@PathVariable Long imageId) {
+	public ResponseEntity<ApiResponse<Void>> deleteProductImage(@PathVariable Long imageId) {
 		productService.deleteProductImage(imageId);
-		return ResponseEntity.noContent().build();
+
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.NO_CONTENT,
+				"Product image deleted successfully",
+				null
+		);
 	}
 
 	@PreAuthorize("hasRole('ADMIN') or (hasRole('MERCHANT') and @productService.isOwner(#productId))")
 	@PostMapping("/{productId}/upload-multi-images")
-	public ResponseEntity<List<ProductImageResponse>> uploadMultipleImages(
+	public ResponseEntity<ApiResponse<List<ProductImageResponse>>> uploadMultipleImages(
 			@PathVariable Long productId,
 			@RequestParam("files") MultipartFile[] files
 	) throws IOException {
-		return ResponseEntity.ok(productService.uploadMultipleImages(productId, files));
-	}
 
+		List<ProductImageResponse> responses = productService.uploadMultipleImages(productId, files);
+
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				"Product images uploaded successfully",
+				responses
+		);
+	}
 }
+

@@ -3,9 +3,6 @@ package com.finpro.twogoods.service;
 import com.finpro.twogoods.dto.request.CustomerRegisterRequest;
 import com.finpro.twogoods.dto.request.MerchantRegisterRequest;
 import com.finpro.twogoods.dto.request.UserRequest;
-import com.finpro.twogoods.dto.response.ApiResponse;
-import com.finpro.twogoods.dto.response.PagingResponse;
-import com.finpro.twogoods.dto.response.StatusResponse;
 import com.finpro.twogoods.dto.response.UserResponse;
 import com.finpro.twogoods.entity.CustomerProfile;
 import com.finpro.twogoods.entity.MerchantProfile;
@@ -14,7 +11,6 @@ import com.finpro.twogoods.enums.UserRole;
 import com.finpro.twogoods.exceptions.ResourceDuplicateException;
 import com.finpro.twogoods.exceptions.ResourceNotFoundException;
 import com.finpro.twogoods.helper.FilterHelper;
-import com.finpro.twogoods.helper.PaginationHelper;
 import com.finpro.twogoods.mapper.UserMapper;
 import com.finpro.twogoods.repository.CustomerProfileRepository;
 import com.finpro.twogoods.repository.MerchantProfileRepository;
@@ -135,10 +131,6 @@ public class UserService implements UserDetailsService {
 			user.setPassword(passwordEncoder.encode(request.getPassword()));
 		}
 
-//		if (request.getProfilePicture() != null && !request.getProfilePicture().isBlank()) {
-//			user.setProfilePicture(request.getProfilePicture());
-//		}
-
 		return userRepository.save(user);
 	}
 
@@ -146,41 +138,29 @@ public class UserService implements UserDetailsService {
 	public User updateProfilePicture(Long userId, MultipartFile file) {
 		User user = getUserById(userId);
 
-//		String imageUrl = cloudinaryService.uploadImage(file);
 		String imageUrl = cloudinaryService.uploadImage(file, "profile_pictures");
-
 
 		user.setProfilePicture(imageUrl);
 
 		return userRepository.save(user);
 	}
 
-	public ApiResponse<List<UserResponse>> getAllUsers(int page, int size, String role, String search) {
+	// ✅ FINAL VERSION: return Page<UserResponse>
+	public Page<UserResponse> getAllUsers(int page, int size, String role, String search) {
 
 		Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
 
 		Page<User> usersPage = userRepository.findAll(pageable);
 
 		List<User> filtered = usersPage.getContent();
-
 		filtered = FilterHelper.filterByRole(filtered, role);
 		filtered = FilterHelper.searchUsers(filtered, search);
-
-//		List<UserResponse> responses = filtered.stream()
-//				.map(UserMapper::toFull)
-//				.toList();
 
 		List<UserResponse> responses = filtered.stream()
 				.map(User::toResponse)
 				.toList();
 
-		PagingResponse paging = PaginationHelper.fromPage(usersPage);
-
-		return ApiResponse.<List<UserResponse>>builder()
-				.status(new StatusResponse(200, "Users fetched successfully"))
-				.data(responses)
-				.paging(paging)
-				.build();
+		return new PageImpl<>(responses, pageable, usersPage.getTotalElements());
 	}
 
 	public UserResponse getMe() {
