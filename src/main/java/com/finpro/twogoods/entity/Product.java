@@ -30,6 +30,7 @@ public class Product extends BaseEntity {
 
 	private BigDecimal price;
 
+	@Builder.Default
 	@ElementCollection(targetClass = Categories.class)
 	@Enumerated(EnumType.STRING)
 	@CollectionTable(
@@ -37,11 +38,14 @@ public class Product extends BaseEntity {
 			joinColumns = @JoinColumn(name = "product_id")
 	)
 	@Column(name = "categories")
-	private List<Categories> categories;
+	private List<Categories> categories = new java.util.ArrayList<>();
+
 
 	private String color;
 
-	private boolean isAvailable;
+	@Builder.Default
+	private Boolean isAvailable = true;
+
 
 	@Enumerated(EnumType.STRING)
 	private ProductCondition condition;

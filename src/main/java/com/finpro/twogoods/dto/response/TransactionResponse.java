@@ -1,21 +1,25 @@
 package com.finpro.twogoods.dto.response;
 
 import com.finpro.twogoods.enums.OrderStatus;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
-@Setter @Builder
+@Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class TransactionResponse {
 	private Long id;
 	private Long customerId;
 	private Long merchantId;
 	private OrderStatus status;
 	private BigDecimal totalPrice;
-	private String midtransOrderId;
-	private String paymentUrl;
-}
+	private LocalDateTime createdAt;
+	private LocalDateTime updatedAt;
 
+	private List<TransactionItemResponse> items;
+}

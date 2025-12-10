@@ -96,4 +96,5 @@ public class User extends BaseEntity implements UserDetails {
 						   .customerProfile(customerProfileResponse)
 						   .build();
 	}
+
 }

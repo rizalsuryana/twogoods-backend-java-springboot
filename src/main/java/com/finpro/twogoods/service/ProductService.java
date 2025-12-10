@@ -8,23 +8,26 @@ import com.finpro.twogoods.entity.Product;
 import com.finpro.twogoods.entity.ProductImage;
 import com.finpro.twogoods.entity.User;
 import com.finpro.twogoods.enums.Categories;
+import com.finpro.twogoods.enums.ProductCondition;
+import com.finpro.twogoods.enums.UserRole;
+import com.finpro.twogoods.exceptions.ResourceNotFoundException;
 import com.finpro.twogoods.repository.MerchantProfileRepository;
 import com.finpro.twogoods.repository.ProductImageRepository;
 import com.finpro.twogoods.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.persistence.criteria.Predicate;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -35,63 +38,129 @@ public class ProductService {
 	private final ProductImageRepository productImageRepository;
 	private final CloudinaryService cloudinaryService;
 
-	//   CREATE PRODUCT — hanya merchant
+	// CREATE PRODUCT
+	@Transactional(rollbackFor = Exception.class)
 	public ProductResponse createProduct(ProductRequest request) {
 
-		User user = (User) SecurityContextHolder.getContext()
-												.getAuthentication()
-												.getPrincipal();
+		User user = getCurrentUser();
 
-		if (!user.getRole().name().equals("MERCHANT")) {
+		if (user.getRole() != UserRole.MERCHANT) {
 			throw new AccessDeniedException("Only MERCHANT can create products");
 		}
 
 		MerchantProfile merchant = merchantProfileRepository.findByUser(user)
-															.orElseThrow(() -> new RuntimeException(
-																	"Merchant profile not found"));
+				.orElseThrow(() -> new ResourceNotFoundException("Merchant profile not found"));
 
 		Product product = Product.builder()
-								 .merchant(merchant)
-								 .name(request.getName())
-								 .description(request.getDescription())
-								 .price(request.getPrice())
-								 .categories(request.getCategories())
-								 .color(request.getColor())
-								 .isAvailable(request.isAvailable())
-								 .condition(request.getCondition())
-								 .build();
+				.merchant(merchant)
+				.name(request.getName())
+				.description(request.getDescription())
+				.price(request.getPrice())
+				.categories(request.getCategories())
+				.color(request.getColor())
+				.isAvailable(true)
+				.condition(request.getCondition())
+				.build();
 
-		Product saved = productRepository.save(product);
-		return toProductResponse(saved);
+		return productRepository.save(product).toResponse();
 	}
 
-	//   GET PRODUCT BY ID
+	// GET PRODUCT BY ID
+	@Transactional(readOnly = true)
 	public ProductResponse getProductById(Long id) {
 		Product product = productRepository.findById(id)
-										   .orElseThrow(() -> new RuntimeException("Product not found"));
-		return toProductResponse(product);
+				.orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+		return product.toResponse();
 	}
 
-	//   GET ALL PRODUCTS (search + filter + paging)
-	public Page<ProductResponse> getProducts(int page, int size, String search, Categories category) {
-		Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+	// GET PRODUCTS WITH FILTER (multi-category + multi-keyword search)
+	@Transactional(readOnly = true)
+	public Page<ProductResponse> getProducts(
+			int page,
+			int size,
+			String search,
+			List<Categories> categories,
+			BigDecimal minPrice,
+			BigDecimal maxPrice,
+			ProductCondition condition,
+			Boolean isAvailable,
+			String sort
+	) {
 
-		Page<Product> result;
+		// Normalisasi sort: handle null, "null", dan kosong
+		if (sort == null || "null".equalsIgnoreCase(sort) || sort.isBlank()) {
+			sort = "newest";
+		}
 
+		Pageable pageable = switch (sort) {
+			case "price_asc" -> PageRequest.of(page, size, Sort.by("price").ascending());
+			case "price_desc" -> PageRequest.of(page, size, Sort.by("price").descending());
+			default -> PageRequest.of(page, size, Sort.by("createdAt").descending());
+		};
+
+		// AND chaining untuk semua filter
+		Specification<Product> spec = Specification.allOf();
+
+		// MULTI-KEYWORD SEARCH: "hoodie vintage black"
 		if (search != null && !search.isBlank()) {
-			result = productRepository.findByNameContainingIgnoreCase(search, pageable);
-		}
-		else if (category != null) {
-			result = productRepository.findByCategoriesContaining(category, pageable);
-		}
-		else {
-			result = productRepository.findAll(pageable);
+			String[] keywords = search.trim().toLowerCase().split("\\s+");
+
+			spec = spec.and((root, query, cb) -> {
+//				criteria builder
+				var namePath = cb.lower(cb.coalesce(root.get("name"), ""));
+				List<Predicate> predicates = new ArrayList<>();
+
+				for (String keyword : keywords) {
+					predicates.add(cb.like(namePath, "%" + keyword + "%"));
+				}
+
+				// Semua keyword harus match (AND)
+				return cb.and(predicates.toArray(Predicate[]::new));
+			});
 		}
 
-		return result.map(this::toProductResponse);
+		// MULTI-CATEGORY FILTER (OR): categories=Male,Shirt
+		if (categories != null && !categories.isEmpty()) {
+			spec = spec.and((root, query, cb) -> {
+				var join = root.join("categories"); // JOIN ke element collection
+				List<Predicate> predicates = new ArrayList<>();
+
+				for (Categories cat : categories) {
+					predicates.add(cb.equal(join, cat));
+				}
+
+				return cb.or(predicates.toArray(Predicate[]::new));
+			});
+		}
+
+
+		if (minPrice != null) {
+			spec = spec.and((root, query, cb) ->
+					cb.greaterThanOrEqualTo(root.get("price"), minPrice));
+		}
+
+		if (maxPrice != null) {
+			spec = spec.and((root, query, cb) ->
+					cb.lessThanOrEqualTo(root.get("price"), maxPrice));
+		}
+
+		if (condition != null) {
+			spec = spec.and((root, query, cb) ->
+					cb.equal(root.get("condition"), condition));
+		}
+
+		if (isAvailable != null) {
+			spec = spec.and((root, query, cb) ->
+					cb.equal(root.get("isAvailable"), isAvailable));
+		}
+
+		Page<Product> result = productRepository.findAll(spec, pageable);
+
+		return result.map(Product::toResponse);
 	}
 
-	//   UPDATE PRODUCT — hanya owner
+	// UPDATE PRODUCT
+	@Transactional(rollbackFor = Exception.class)
 	public ProductResponse updateProduct(Long id, ProductRequest request) {
 
 		if (!isOwner(id)) {
@@ -99,21 +168,21 @@ public class ProductService {
 		}
 
 		Product product = productRepository.findById(id)
-										   .orElseThrow(() -> new RuntimeException("Product not found"));
+				.orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
 		if (request.getName() != null) product.setName(request.getName());
 		if (request.getDescription() != null) product.setDescription(request.getDescription());
 		if (request.getPrice() != null) product.setPrice(request.getPrice());
 		if (request.getCategories() != null) product.setCategories(request.getCategories());
 		if (request.getColor() != null) product.setColor(request.getColor());
-		product.setAvailable(request.isAvailable());
+		if (request.getIsAvailable() != null) product.setIsAvailable(request.getIsAvailable());
 		if (request.getCondition() != null) product.setCondition(request.getCondition());
 
-		Product updated = productRepository.save(product);
-		return toProductResponse(updated);
+		return productRepository.save(product).toResponse();
 	}
 
-	//   DELETE PRODUCT — hanya owner
+	// DELETE PRODUCT
+	@Transactional(rollbackFor = Exception.class)
 	public void deleteProduct(Long id) {
 
 		if (!isOwner(id)) {
@@ -121,11 +190,13 @@ public class ProductService {
 		}
 
 		Product product = productRepository.findById(id)
-										   .orElseThrow(() -> new RuntimeException("Product not found"));
+				.orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+
 		productRepository.delete(product);
 	}
 
-	//   UPLOAD IMAGE — hanya owner
+	// UPLOAD IMAGE
+	@Transactional(rollbackFor = Exception.class)
 	public ProductImageResponse uploadProductImage(Long productId, MultipartFile file) throws IOException {
 
 		if (!isOwner(productId)) {
@@ -133,85 +204,22 @@ public class ProductService {
 		}
 
 		Product product = productRepository.findById(productId)
-										   .orElseThrow(() -> new RuntimeException("Product not found"));
-//		String imageUrl = cloudinaryService.uploadImage(file);
+				.orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+
 		String imageUrl = cloudinaryService.uploadImage(file, "products");
-		ProductImage image = ProductImage.builder()
-										 .product(product)
-										 .imageUrl(imageUrl)
-										 .build();
 
-		ProductImage saved = productImageRepository.save(image);
+		ProductImage saved = productImageRepository.save(
+				ProductImage.builder()
+						.product(product)
+						.imageUrl(imageUrl)
+						.build()
+		);
 
-		return ProductImageResponse.builder()
-								   .id(saved.getId())
-								   .imageUrl(saved.getImageUrl())
-								   .build();
+		return saved.toResponse();
 	}
 
-	//   CHECK OWNER
-	public boolean isOwner(Long productId) {
-
-		User user = (User) SecurityContextHolder.getContext()
-												.getAuthentication()
-												.getPrincipal();
-
-		Product product = productRepository.findById(productId)
-										   .orElse(null);
-
-		if (product == null) return false;
-
-		Long merchantUserId = product.getMerchant().getUser().getId();
-
-		return merchantUserId.equals(user.getId());
-	}
-
-	//   GET PRODUCTS BY MERCHANT
-	public Page<ProductResponse> getProductsByMerchant(Long merchantId, int page, int size) {
-		MerchantProfile merchant = merchantProfileRepository.findById(merchantId)
-															.orElseThrow(() -> new RuntimeException("Merchant not found"));
-
-		Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-
-		Page<Product> result = productRepository.findByMerchant(merchant, pageable);
-
-		return result.map(this::toProductResponse);
-	}
-
-	//   GET AVAILABLE PRODUCTS
-	public Page<ProductResponse> getAvailableProducts(int page, int size) {
-		Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-
-		Page<Product> result = productRepository.findByIsAvailableTrue(pageable);
-
-		return result.map(this::toProductResponse);
-	}
-
-	//	Delete
-	public void deleteProductImage(Long imageId) {
-
-		ProductImage image = productImageRepository.findById(imageId)
-												   .orElseThrow(() -> new RuntimeException("Image not found"));
-//	bisa ditambah hapus dari si cloudinary jg nanti
-		productImageRepository.delete(image);
-	}
-
-	public boolean isOwnerByImage(Long imageId) {
-		User user = (User) SecurityContextHolder.getContext()
-												.getAuthentication()
-												.getPrincipal();
-
-		ProductImage image = productImageRepository.findById(imageId)
-												   .orElse(null);
-
-		if (image == null) return false;
-
-		Long merchantUserId = image.getProduct().getMerchant().getUser().getId();
-
-		return merchantUserId.equals(user.getId());
-	}
-
-
+	// UPLOAD MULTIPLE IMAGES
+	@Transactional(rollbackFor = Exception.class)
 	public List<ProductImageResponse> uploadMultipleImages(Long productId, MultipartFile[] files) throws IOException {
 
 		if (!isOwner(productId)) {
@@ -219,52 +227,52 @@ public class ProductService {
 		}
 
 		Product product = productRepository.findById(productId)
-										   .orElseThrow(() -> new RuntimeException("Product not found"));
+				.orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
 		List<ProductImageResponse> responses = new ArrayList<>();
 
 		for (MultipartFile file : files) {
-//			String imageUrl = cloudinaryService.uploadImage(file);
+
 			String imageUrl = cloudinaryService.uploadImage(file, "products");
 
-			ProductImage image = ProductImage.builder()
-											 .product(product)
-											 .imageUrl(imageUrl)
-											 .build();
+			ProductImage saved = productImageRepository.save(
+					ProductImage.builder()
+							.product(product)
+							.imageUrl(imageUrl)
+							.build()
+			);
 
-			ProductImage saved = productImageRepository.save(image);
-
-			responses.add(
-					ProductImageResponse.builder()
-										.id(saved.getId())
-										.imageUrl(saved.getImageUrl())
-										.build()
-						 );
+			responses.add(saved.toResponse());
 		}
 
 		return responses;
 	}
 
+	// DELETE IMAGE
+	@Transactional(rollbackFor = Exception.class)
+	public void deleteProductImage(Long imageId) {
 
-	//  MAPPER
-	private ProductResponse toProductResponse(Product product) {
-		return ProductResponse.builder()
-							  .id(product.getId())
-							  .merchantId(product.getMerchant().getId())
-							  .name(product.getName())
-							  .description(product.getDescription())
-							  .price(product.getPrice())
-							  .categories(product.getCategories())
-							  .color(product.getColor())
-							  .isAvailable(product.isAvailable())
-							  .condition(product.getCondition())
-							  .images(product.getImages() == null ? null :
-									  product.getImages().stream()
-											 .map(img -> ProductImageResponse.builder()
-																			 .id(img.getId())
-																			 .imageUrl(img.getImageUrl())
-																			 .build())
-											 .collect(Collectors.toList()))
-							  .build();
+		ProductImage image = productImageRepository.findById(imageId)
+				.orElseThrow(() -> new ResourceNotFoundException("Image not found"));
+
+		productImageRepository.delete(image);
+	}
+
+	// OWNER CHECK
+	@Transactional(readOnly = true)
+	public boolean isOwner(Long productId) {
+
+		User user = getCurrentUser();
+
+		Product product = productRepository.findById(productId).orElse(null);
+		if (product == null) return false;
+
+		return product.getMerchant().getUser().getId().equals(user.getId());
+	}
+
+	private User getCurrentUser() {
+		return (User) SecurityContextHolder.getContext()
+				.getAuthentication()
+				.getPrincipal();
 	}
 }

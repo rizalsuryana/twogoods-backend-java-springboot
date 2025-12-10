@@ -10,5 +10,5 @@ import java.util.List;
 public class CreateTransactionRequest {
 	private Long customerId;
 	private Long merchantId;
-	private List<Long> productIds;
+	private Long productId;
 }

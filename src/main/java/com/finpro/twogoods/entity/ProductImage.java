@@ -1,7 +1,7 @@
 package com.finpro.twogoods.entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.finpro.twogoods.dto.response.ProductImageResponse;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,11 +11,8 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProductImage {
+public class ProductImage extends BaseEntity {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
 
 	private String imageUrl;
 
@@ -26,8 +23,8 @@ public class ProductImage {
 
 	public ProductImageResponse toResponse() {
 		return ProductImageResponse.builder()
-								   .id(id)
-								   .imageUrl(imageUrl)
-								   .build();
+				.id(getId())
+				.imageUrl(imageUrl)
+				.build();
 	}
 }

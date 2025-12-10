@@ -2,7 +2,6 @@ package com.finpro.twogoods.service;
 
 import com.finpro.twogoods.dto.request.CustomerRegisterRequest;
 import com.finpro.twogoods.dto.request.MerchantRegisterRequest;
-import com.finpro.twogoods.dto.request.SearchUserRequest;
 import com.finpro.twogoods.dto.request.UserRequest;
 import com.finpro.twogoods.dto.response.UserResponse;
 import com.finpro.twogoods.entity.CustomerProfile;
@@ -11,22 +10,17 @@ import com.finpro.twogoods.entity.User;
 import com.finpro.twogoods.enums.UserRole;
 import com.finpro.twogoods.exceptions.ResourceDuplicateException;
 import com.finpro.twogoods.exceptions.ResourceNotFoundException;
+import com.finpro.twogoods.helper.FilterHelper;
 import com.finpro.twogoods.mapper.UserMapper;
 import com.finpro.twogoods.repository.CustomerProfileRepository;
 import com.finpro.twogoods.repository.MerchantProfileRepository;
 import com.finpro.twogoods.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.userdetails.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,69 +43,69 @@ public class UserService implements UserDetailsService {
 	@Override
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 		return userRepository.findByEmail(email)
-							 .orElseThrow(() -> new UsernameNotFoundException("Email or password is incorrect"));
+				.orElseThrow(() -> new UsernameNotFoundException("Email or password is incorrect"));
 	}
 
-	@Transactional
+	@Transactional(rollbackFor = Exception.class)
 	public User createCustomer(CustomerRegisterRequest request) {
 
 		String username = validateUserOnRegister(
 				request.getPassword(),
 				request.getConfirmPassword(),
 				request.getEmail()
-												);
+		);
 
 		User user = User.builder()
-						.username(username)
-						.email(request.getEmail())
-						.password(passwordEncoder.encode(request.getPassword()))
-						.fullName(request.getFullName())
-						.role(UserRole.CUSTOMER)
-						.enabled(true)
-						.build();
+				.username(username)
+				.email(request.getEmail())
+				.password(passwordEncoder.encode(request.getPassword()))
+				.fullName(request.getFullName())
+				.role(UserRole.CUSTOMER)
+				.enabled(true)
+				.build();
 
 		userRepository.save(user);
 
 		customerProfileRepository.save(
 				CustomerProfile.builder().user(user).build()
-									  );
+		);
 
 		return user;
 	}
 
-	@Transactional
+	@Transactional(rollbackFor = Exception.class)
 	public User createMerchant(MerchantRegisterRequest request) {
 
 		String username = validateUserOnRegister(
 				request.getPassword(),
 				request.getConfirmPassword(),
 				request.getEmail()
-												);
+		);
 
 		User user = User.builder()
-						.username(username)
-						.email(request.getEmail())
-						.password(passwordEncoder.encode(request.getPassword()))
-						.fullName(request.getFullName())
-						.role(UserRole.MERCHANT)
-						.enabled(true)
-						.build();
+				.username(username)
+				.email(request.getEmail())
+				.password(passwordEncoder.encode(request.getPassword()))
+				.fullName(request.getFullName())
+				.role(UserRole.MERCHANT)
+				.enabled(true)
+				.build();
 
 		userRepository.save(user);
 
 		merchantProfileRepository.save(
 				MerchantProfile.builder()
-							   .user(user)
-							   .location(request.getLocation())
-							   .NIK(request.getNik())
-							   .rating(0)
-							   .build()
-									  );
+						.user(user)
+						.location(request.getLocation())
+						.NIK(request.getNik())
+						.rating(0)
+						.build()
+		);
 
 		return user;
 	}
 
-	@Transactional
+	@Transactional(rollbackFor = Exception.class)
 	public User updateUser(Long id, UserRequest request) {
 		User user = getUserById(id);
 
@@ -137,30 +131,36 @@ public class UserService implements UserDetailsService {
 			user.setPassword(passwordEncoder.encode(request.getPassword()));
 		}
 
-//		if (request.getProfilePicture() != null && !request.getProfilePicture().isBlank()) {
-//			user.setProfilePicture(request.getProfilePicture());
-//		}
-
 		return userRepository.save(user);
 	}
 
-	@Transactional
+	@Transactional(rollbackFor = Exception.class)
 	public User updateProfilePicture(Long userId, MultipartFile file) {
 		User user = getUserById(userId);
 
-//		String imageUrl = cloudinaryService.uploadImage(file);
 		String imageUrl = cloudinaryService.uploadImage(file, "profile_pictures");
-
 
 		user.setProfilePicture(imageUrl);
 
 		return userRepository.save(user);
 	}
 
-	public Page<User> getAllUsers(Integer page, Integer size, SearchUserRequest request) {
-		Pageable pageable = PageRequest.of(Math.max(page - 1, 0), size);
-		Specification<User> specification = UserRepository.getSpecification(request);
-		return userRepository.findAll(specification, pageable);
+
+	public Page<UserResponse> getAllUsers(int page, int size, String role, String search) {
+
+		Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
+
+		Page<User> usersPage = userRepository.findAll(pageable);
+
+		List<User> filtered = usersPage.getContent();
+		filtered = FilterHelper.filterByRole(filtered, role);
+		filtered = FilterHelper.searchUsers(filtered, search);
+
+		List<UserResponse> responses = filtered.stream()
+				.map(User::toResponse)
+				.toList();
+
+		return new PageImpl<>(responses, pageable, usersPage.getTotalElements());
 	}
 
 	public UserResponse getMe() {
@@ -168,7 +168,7 @@ public class UserService implements UserDetailsService {
 		User principal = (User) auth.getPrincipal();
 
 		User user = userRepository.findById(principal.getId())
-								  .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
 		return UserMapper.toFull(user);
 	}
@@ -196,6 +196,6 @@ public class UserService implements UserDetailsService {
 
 	public User getUserById(Long id) {
 		return userRepository.findById(id)
-							 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
 	}
 }
