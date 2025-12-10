@@ -6,6 +6,7 @@ import com.finpro.twogoods.dto.request.MerchantRegisterRequest;
 import com.finpro.twogoods.dto.response.LoginResponse;
 import com.finpro.twogoods.dto.response.RegisterResponse;
 import com.finpro.twogoods.entity.User;
+import com.finpro.twogoods.enums.UserRole;
 import com.finpro.twogoods.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +14,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
-import com.finpro.twogoods.enums.UserRole;
 
 @Slf4j
 @Service
@@ -31,7 +31,7 @@ public class AuthService {
 						request.getEmail(),
 						request.getPassword()
 				)
-		);
+																		  );
 
 		User user = (User) authentication.getPrincipal();
 		String token = jwtTokenProvider.generateToken(user);
@@ -46,19 +46,19 @@ public class AuthService {
 		}
 
 		LoginResponse.UserInfo userInfo = LoginResponse.UserInfo.builder()
-				.userId(user.getId())
-				.role(user.getRole().getRoleName())
-				.email(user.getEmail())
-				.name(user.getFullName())
-				.profilePicture(user.getProfilePicture())
-				.location(location)
-				.build();
+																.userId(user.getId())
+																.role(user.getRole().getRoleName())
+																.email(user.getEmail())
+																.name(user.getFullName())
+																.profilePicture(user.getProfilePicture())
+																.location(location)
+																.build();
 
 		return LoginResponse.builder()
-				.accessToken(token)
-				.tokenType("Bearer")
-				.user(userInfo)
-				.build();
+							.accessToken(token)
+							.tokenType("Bearer")
+							.user(userInfo)
+							.build();
 	}
 
 
@@ -71,13 +71,13 @@ public class AuthService {
 		log.info("Customer registered successfully with username: {}", user.getUsername());
 
 		return RegisterResponse.builder()
-				.fullName(user.getFullName())
-				.email(user.getEmail())
-				.build();
+							   .fullName(user.getFullName())
+							   .email(user.getEmail())
+							   .build();
 	}
 
 
-// REGISTER MERCHANT
+	// REGISTER MERCHANT
 	public RegisterResponse registerMerchant(MerchantRegisterRequest request) {
 		log.info("Attempting to register MERCHANT with email: {}", request.getEmail());
 
@@ -86,8 +86,8 @@ public class AuthService {
 		log.info("Merchant registered successfully with username: {}", user.getUsername());
 
 		return RegisterResponse.builder()
-				.fullName(user.getFullName())
-				.email(user.getEmail())
-				.build();
+							   .fullName(user.getFullName())
+							   .email(user.getEmail())
+							   .build();
 	}
 }

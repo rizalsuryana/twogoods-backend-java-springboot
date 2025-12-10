@@ -17,9 +17,9 @@ public class TransactionController {
 
 	private final TransactionService transactionService;
 
-	@PostMapping
-	public ResponseEntity<TransactionResponse> create(@RequestBody CreateTransactionRequest request) {
-		return ResponseEntity.ok(transactionService.createTransaction(request));
+	@PostMapping("/checkout")
+	public ResponseEntity<?> checkout(@RequestBody CreateTransactionRequest request) {
+		return ResponseEntity.ok(transactionService.checkout(request));
 	}
 
 	@GetMapping("/me")

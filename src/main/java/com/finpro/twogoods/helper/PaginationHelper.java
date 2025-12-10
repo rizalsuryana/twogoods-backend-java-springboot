@@ -7,12 +7,12 @@ public class PaginationHelper {
 
 	public static PagingResponse fromPage(Page<?> page) {
 		return PagingResponse.builder()
-				.page(page.getNumber())
-				.rowsPerPage(page.getSize())
-				.totalRows(page.getTotalElements())
-				.totalPages(page.getTotalPages())
-				.hasNext(page.hasNext())
-				.hasPrevious(page.hasPrevious())
-				.build();
+							 .page(page.getNumber())
+							 .rowsPerPage(page.getSize())
+							 .totalRows(page.getTotalElements())
+							 .totalPages(page.getTotalPages())
+							 .hasNext(page.hasNext())
+							 .hasPrevious(page.hasPrevious())
+							 .build();
 	}
 }

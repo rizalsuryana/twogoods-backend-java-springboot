@@ -1,25 +1,56 @@
 package com.finpro.twogoods.repository;
 
+import com.finpro.twogoods.dto.request.SearchUserRequest;
 import com.finpro.twogoods.entity.User;
 import com.finpro.twogoods.enums.UserRole;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-	Optional<User> findByEmail (String email);
+	static Specification<User> getSpecification(SearchUserRequest request) {
+		return (root, criteriaQuery, criteriaBuilder) -> {
+			List<Predicate> predicates = new ArrayList<>();
+			if (request.getFullName() != null && !request.getFullName().isEmpty()) {
+				predicates.add(criteriaBuilder.like(
+						criteriaBuilder.lower(root.get("fullName")),
+						"%" + request.getFullName().toLowerCase() + "%"
+												   ));
+				predicates.add(criteriaBuilder.like(
+						criteriaBuilder.lower(root.get("email")),
+						"%" + request.getFullName().toLowerCase() + "%"
+												   ));
+			}
 
-	Optional<User> findByUsername (String username);
+			if (request.getRole() != null) {
+				predicates.add(criteriaBuilder.equal(
+						root.get("role"), request.getRole()
+													));
+			}
 
-	boolean existsByUsername (String username);
+			return criteriaBuilder.or(predicates.toArray(new Predicate[0]));
+		};
+	}
 
-	boolean existsByUsernameAndIdNot (String username, Long id);
+	Optional<User> findByEmail(String email);
+
+	Optional<User> findByUsername(String username);
+
+	boolean existsByUsername(String username);
+
+	boolean existsByUsernameAndIdNot(String username, Long id);
+
 	boolean existsByEmailAndIdNot(String email, Long id);
-	boolean existsByEmail (String email);
-	List<User> findAllByRole (UserRole role);
+
+	boolean existsByEmail(String email);
+
+	Page<User> findAll(Specification<User> specification, Pageable pageable);
 }

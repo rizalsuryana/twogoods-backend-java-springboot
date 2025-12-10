@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.Map;
 
 @Service @RequiredArgsConstructor @Transactional(readOnly = true) public class CloudinaryService {
@@ -19,7 +18,7 @@ import java.util.Map;
 			Map upload = cloudinary.uploader().upload(
 					file.getBytes(),
 					Map.of("folder", folder)
-			);
+													 );
 			return (String) upload.get("secure_url");
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to upload image", e);

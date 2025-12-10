@@ -1,7 +1,7 @@
 package com.finpro.twogoods.entity;
 
-import com.finpro.twogoods.dto.response.ProductImageResponse;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.finpro.twogoods.dto.response.ProductImageResponse;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -26,8 +26,8 @@ public class ProductImage {
 
 	public ProductImageResponse toResponse() {
 		return ProductImageResponse.builder()
-				.id(id)
-				.imageUrl(imageUrl)
-				.build();
+								   .id(id)
+								   .imageUrl(imageUrl)
+								   .build();
 	}
 }

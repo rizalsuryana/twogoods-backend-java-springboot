@@ -7,14 +7,14 @@ public enum UserRole {
 	MERCHANT("MERCHANT"),
 	CUSTOMER("CUSTOMER");
 
-    @Getter
-    private final String displayName;
+	@Getter
+	private final String displayName;
 
-    UserRole(String displayName) {
-        this.displayName = displayName;
-    }
+	UserRole(String displayName) {
+		this.displayName = displayName;
+	}
 
-    public String getRoleName() {
-        return "ROLE_" + this.name();
-    }
+	public String getRoleName() {
+		return "ROLE_" + this.name();
+	}
 }

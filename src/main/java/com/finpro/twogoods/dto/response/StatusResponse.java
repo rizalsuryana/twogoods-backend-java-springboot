@@ -8,6 +8,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class StatusResponse {
-    private Integer code;
-    private String description;
+	private Integer code;
+	private String description;
 }
