@@ -58,7 +58,7 @@ public class ProductService {
 				.price(request.getPrice())
 				.categories(request.getCategories())
 				.color(request.getColor())
-				.isAvailable(Boolean.TRUE.equals(request.getIsAvailable()))
+				.isAvailable(true)
 				.condition(request.getCondition())
 				.build();
 

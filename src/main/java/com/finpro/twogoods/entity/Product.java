@@ -43,7 +43,9 @@ public class Product extends BaseEntity {
 
 	private String color;
 
-	private Boolean isAvailable;
+	@Builder.Default
+	private Boolean isAvailable = true;
+
 
 	@Enumerated(EnumType.STRING)
 	private ProductCondition condition;
