@@ -6,6 +6,7 @@ import com.finpro.twogoods.dto.response.UserResponse;
 import com.finpro.twogoods.entity.User;
 import com.finpro.twogoods.service.UserService;
 import com.finpro.twogoods.utils.ResponseUtil;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
+@Tag(name="User")
 public class UserController {
 
 	private final UserService userService;

@@ -5,6 +5,7 @@ import com.finpro.twogoods.dto.response.CartItemResponse;
 import com.finpro.twogoods.service.CartService;
 import com.finpro.twogoods.utils.ResponseUtil;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/cart")
 @RequiredArgsConstructor
+@Tag(name = "Cart / Keranjang")
 public class CartController {
 
 	private final CartService cartService;

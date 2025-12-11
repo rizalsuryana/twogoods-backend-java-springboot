@@ -6,6 +6,7 @@ import com.finpro.twogoods.entity.MerchantProfile;
 import com.finpro.twogoods.entity.User;
 import com.finpro.twogoods.service.MerchantProfileService;
 import com.finpro.twogoods.utils.ResponseUtil;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,6 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/merchant-profiles")
 @RequiredArgsConstructor
+@Tag(name="Merchant-Profile")
 public class MerchantProfileController {
 
 	private final MerchantProfileService merchantProfileService;
