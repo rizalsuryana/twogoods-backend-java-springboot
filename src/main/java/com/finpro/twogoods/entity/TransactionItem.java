@@ -5,7 +5,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.*;
-
 import java.math.BigDecimal;
 
 @Entity
@@ -26,4 +25,10 @@ public class TransactionItem extends BaseEntity {
 	private Product product;
 
 	private BigDecimal price;
+
+	private Integer quantity;
+
+	public BigDecimal getSubtotal() {
+		return price.multiply(BigDecimal.valueOf(quantity));
+	}
 }

@@ -1,11 +1,15 @@
 package com.finpro.twogoods.controller;
 
+import com.finpro.twogoods.dto.response.ApiResponse;
+import com.finpro.twogoods.dto.response.MerchantProfileResponse;
 import com.finpro.twogoods.entity.MerchantProfile;
 import com.finpro.twogoods.entity.User;
 import com.finpro.twogoods.service.MerchantProfileService;
+import com.finpro.twogoods.utils.ResponseUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
@@ -20,65 +24,91 @@ public class MerchantProfileController {
 
 	private final MerchantProfileService merchantProfileService;
 
+	//  GET PAGINATED
 	@GetMapping
-	public ResponseEntity<Page<MerchantProfile>> getAllPaginated(
+	public ResponseEntity<ApiResponse<List<MerchantProfile>>> getAllPaginated(
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size
 	) {
 		Page<MerchantProfile> profiles =
 				merchantProfileService.getAllPaginated(PageRequest.of(page, size));
 
-		return ResponseEntity.ok(profiles);
+		return ResponseUtil.buildPagedResponse(
+				HttpStatus.OK,
+				"Merchant profiles fetched successfully",
+				profiles
+		);
 	}
 
+	//  GET ALL (non-paginated)
 	@GetMapping("/all")
-	public ResponseEntity<List<MerchantProfile>> getAll() {
-		return ResponseEntity.ok(merchantProfileService.getAllMerchantProfiles());
+	public ResponseEntity<ApiResponse<List<MerchantProfile>>> getAll() {
+		List<MerchantProfile> profiles = merchantProfileService.getAllMerchantProfiles();
+
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				"Merchant profiles fetched successfully",
+				profiles
+		);
 	}
 
+	//  GET BY ID
 	@GetMapping("/{id}")
-	public ResponseEntity<MerchantProfile> getById(@PathVariable Long id) {
-		return ResponseEntity.ok(merchantProfileService.getMerchantById(id));
+	public ResponseEntity<ApiResponse<MerchantProfileResponse>> getById(@PathVariable Long id) {
+		MerchantProfile profile = merchantProfileService.getMerchantById(id);
+
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				"Merchant profile fetched successfully",
+				profile.toResponse()
+		);
 	}
 
+	//  UPDATE (only owner)
 	@PutMapping("/{id}")
-	public ResponseEntity<MerchantProfile> update(
+	public ResponseEntity<ApiResponse<MerchantProfile>> update(
 			@PathVariable Long id,
 			@RequestBody MerchantProfile merchantProfile,
 			Authentication auth
 	) {
 		User user = (User) auth.getPrincipal();
 
-		// hanya MERCHANT yang boleh update merchant profile
 		if (!user.getRole().name().equals("MERCHANT")) {
 			throw new AccessDeniedException("Only MERCHANT can update merchant profile");
 		}
 
-		// hanya boleh update profile miliknya sendiri
 		if (!user.getId().equals(id)) {
 			throw new AccessDeniedException("You can only update your own merchant profile");
 		}
 
-		return ResponseEntity.ok(
-				merchantProfileService.updateMerchantProfile(id, merchantProfile)
+		MerchantProfile updated = merchantProfileService.updateMerchantProfile(id, merchantProfile);
+
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				"Merchant profile updated successfully",
+				updated
 		);
 	}
 
+	//  DELETE (only owner)
 	@DeleteMapping("/{id}")
-	public ResponseEntity<Void> delete(@PathVariable Long id, Authentication auth) {
+	public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id, Authentication auth) {
 		User user = (User) auth.getPrincipal();
 
-		// hanya MERCHANT yang boleh delete merchant profile
 		if (!user.getRole().name().equals("MERCHANT")) {
 			throw new AccessDeniedException("Only MERCHANT can delete merchant profile");
 		}
 
-		// hanya boleh delete profile miliknya sendiri
 		if (!user.getId().equals(id)) {
 			throw new AccessDeniedException("You can only delete your own merchant profile");
 		}
 
 		merchantProfileService.deleteMerchantProfileById(id);
-		return ResponseEntity.noContent().build();
+
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.NO_CONTENT,
+				"Merchant profile deleted successfully",
+				null
+		);
 	}
 }

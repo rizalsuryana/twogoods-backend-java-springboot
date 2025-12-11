@@ -24,7 +24,7 @@ public class ProductRequest {
 
 	private String color;
 
-	private boolean isAvailable;
+	private Boolean isAvailable;
 
 	private ProductCondition condition;
 }
