@@ -1,19 +1,22 @@
 package com.finpro.twogoods.service;
 
+<<<<<<< HEAD
 import com.finpro.twogoods.client.dto.MidtransNotification;
 import com.finpro.twogoods.dto.request.CreateTransactionRequest;
+=======
+>>>>>>> dca2e24 (ADD buy now DELETE create transaction)
 import com.finpro.twogoods.dto.response.TransactionResponse;
 import com.finpro.twogoods.entity.*;
 import com.finpro.twogoods.enums.OrderStatus;
 import com.finpro.twogoods.enums.UserRole;
 import com.finpro.twogoods.exceptions.ApiException;
+import com.finpro.twogoods.exceptions.ResourceNotFoundException;
 import com.finpro.twogoods.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -24,60 +27,51 @@ public class TransactionService {
 	private final ProductRepository productRepository;
 	private final MerchantProfileRepository merchantProfileRepository;
 
-	// CREATE TRANSACTION
-	@Transactional(rollbackFor = Exception.class)
-	public TransactionResponse createTransaction(CreateTransactionRequest request) {
+	// Buy now
+	@Transactional
+	public TransactionResponse buyNow(Long productId) {
+		User user = getCurrentUser();
 
-		User currentUser = getCurrentUser();
-
-		if (!currentUser.getRole().equals(UserRole.CUSTOMER)) {
-			throw new ApiException("Only customers can create transactions");
+		if (!user.getRole().equals(UserRole.CUSTOMER)) {
+			throw new ApiException("Only customers can buy products");
 		}
 
-		Product product = productRepository.findById(request.getProductId())
-				.orElseThrow(() -> new ApiException("Product not found"));
+		Product product = productRepository.findById(productId)
+				.orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
 		if (!product.getIsAvailable()) {
-			throw new ApiException("Product is no longer available");
+			throw new ApiException("Product is sold out");
 		}
 
-		MerchantProfile merchant = product.getMerchant();
-
-		if (merchant.getUser().getId().equals(currentUser.getId())) {
+		if (product.getMerchant().getUser().getId().equals(user.getId())) {
 			throw new ApiException("Merchant cannot buy their own product");
 		}
 
-		// Create transaction
-		Transaction transaction = Transaction.builder()
-				.customer(currentUser)
-				.merchant(merchant)
+		Transaction trx = Transaction.builder()
+				.customer(user)
+				.merchant(product.getMerchant())
 				.status(OrderStatus.PENDING)
-				.totalPrice(BigDecimal.ZERO)
+				.totalPrice(product.getPrice())
 				.build();
 
-		// Create item (quantity = 1)
 		TransactionItem item = TransactionItem.builder()
-				.transaction(transaction)
+				.transaction(trx)
 				.product(product)
 				.price(product.getPrice())
 				.quantity(1)
 				.build();
 
-		transaction.getItems().add(item);
+		trx.getItems().add(item);
 
-		// Hitung total otomatis
-		BigDecimal total = item.getSubtotal();
-		transaction.setTotalPrice(total);
+		Transaction saved = transactionRepository.save(trx);
 
-		// Simpan transaction + items (cascade)
-		Transaction saved = transactionRepository.save(transaction);
-
-		// Set product unavailable
 		product.setIsAvailable(false);
 		productRepository.save(product);
 
 		return saved.toResponse();
 	}
+
+
 
 	// GET DETAIL TRANSACTION
 	@Transactional(readOnly = true)
