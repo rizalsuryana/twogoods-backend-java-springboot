@@ -1,5 +1,7 @@
 package com.finpro.twogoods.controller;
 
+import com.finpro.twogoods.client.dto.MidtransSnapRequest;
+import com.finpro.twogoods.client.dto.MidtransSnapResponse;
 import com.finpro.twogoods.dto.request.CreateTransactionRequest;
 import com.finpro.twogoods.dto.response.ApiResponse;
 import com.finpro.twogoods.dto.response.TransactionResponse;
@@ -23,6 +25,20 @@ import java.util.List;
 public class TransactionController {
 
 	private final TransactionService transactionService;
+
+	@Operation(
+			summary = "Test snap request",
+			description = "Testing request for snap."
+	)
+	@PostMapping("/snap")
+	private ResponseEntity<ApiResponse<MidtransSnapResponse>> snap(@RequestBody MidtransSnapRequest request){
+		System.out.println(">>> Controller HIT");
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				HttpStatus.OK.getReasonPhrase(),
+				transactionService.createSnap(request)
+											   );
+	}
 
 	// CREATE TRANSACTION
 	@Operation(

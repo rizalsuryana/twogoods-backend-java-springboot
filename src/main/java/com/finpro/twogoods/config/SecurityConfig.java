@@ -41,7 +41,8 @@ public class SecurityConfig {
 													   "/api/v1/merchant",
 													   "/api/v1/merchant/**",
 													   "/api/v1/customers",
-													   "/api/v1/customers/**"
+													   "/api/v1/customers/**",
+													   "/api/v1/transactions/snap"
 															   ).permitAll()
 											   .anyRequest().authenticated()
 

@@ -1,5 +1,8 @@
 package com.finpro.twogoods.service;
 
+import com.finpro.twogoods.client.MidtransFeignClient;
+import com.finpro.twogoods.client.dto.MidtransSnapRequest;
+import com.finpro.twogoods.client.dto.MidtransSnapResponse;
 import com.finpro.twogoods.dto.request.CreateTransactionRequest;
 import com.finpro.twogoods.dto.response.TransactionResponse;
 import com.finpro.twogoods.entity.*;
@@ -20,9 +23,17 @@ import java.util.List;
 public class TransactionService {
 
 	private final TransactionRepository transactionRepository;
-	private final TransactionItemRepository transactionItemRepository;
 	private final ProductRepository productRepository;
 	private final MerchantProfileRepository merchantProfileRepository;
+	private final MidtransFeignClient midtransFeignClient;
+
+
+	public MidtransSnapResponse createSnap(MidtransSnapRequest request) {
+		System.out.println(">>> createSnap called");
+		return midtransFeignClient.createTransaction(request);
+	}
+
+
 
 	// CREATE TRANSACTION
 	@Transactional(rollbackFor = Exception.class)

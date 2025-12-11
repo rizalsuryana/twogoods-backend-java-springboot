@@ -24,10 +24,8 @@ public class MidtransService {
 						new MidtransSnapRequest.CreditCard(true)
 		);
 
-		// Your server key encoded in Base64
-		String base64 = "Basic TWlkLXNlcnZlci1pZ2dhUktEMl85SEJMSTNFRUw0Qi1vbWQ6";
 
-		return midtransFeignClient.createTransaction(base64, request);
+		return midtransFeignClient.createTransaction( request);
 	}
 
 }
