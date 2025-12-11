@@ -43,7 +43,6 @@ public class TransactionController {
 				transactionService.createTransaction(request)
 		);
 	}
-
 	// GET DETAIL TRANSACTION
 	@Operation(
 			summary = "Get transaction detail",
