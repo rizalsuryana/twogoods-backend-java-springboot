@@ -48,15 +48,17 @@ public class MerchantProfile {
 	public MerchantProfileResponse toResponse() {
 		return MerchantProfileResponse.builder()
 									  .id(id)
-				.rating(rating)
+									  .rating(rating)
 									  .location(location)
 									  .fullName(user != null ? user.getFullName() : null)
 									  .email(user != null ? user.getEmail() : null)
 									  .profilePicture(user != null ? user.getProfilePicture() : null)
 									  .role(user != null ? user.getRole() : null)
-				.products(products == null
-						? null
-						: products.stream().map(Product::toResponse).toList())
+									  .products(products == null
+												? null
+												: products.stream().map(Product::toResponse).toList())
 									  .build();
 	}
 }
+
+//get all tambahin rating?
