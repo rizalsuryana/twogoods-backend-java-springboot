@@ -23,9 +23,7 @@ public class MerchantProfile {
 	@Column(name = "nomor_ktp")
 	private String NIK;
 
-<<<<<<< HEAD
 	private float rating;
-=======
 	@Column(name = "ktp_photo")
 	private String ktpPhoto;
 
@@ -36,15 +34,12 @@ public class MerchantProfile {
 	private String rejectReason;
 
 	private String location;
->>>>>>> 39f143c ([ADD] Add Merchant Status Enum)
 
 	@OneToOne
 	@MapsId
 	@JoinColumn(name = "user_id")
 	@JsonBackReference
 	private User user;
-
-	private String location;
 
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "merchant")
 	private List<Product> products;
