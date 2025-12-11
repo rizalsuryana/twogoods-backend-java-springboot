@@ -1,7 +1,7 @@
 package com.finpro.twogoods.entity;
 
-import com.finpro.twogoods.dto.response.MerchantProfileResponse;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.finpro.twogoods.dto.response.MerchantProfileResponse;
 import jakarta.persistence.*;
 import lombok.*;
 

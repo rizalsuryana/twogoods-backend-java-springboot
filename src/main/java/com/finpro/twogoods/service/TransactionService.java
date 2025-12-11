@@ -19,9 +19,17 @@ import java.util.List;
 public class TransactionService {
 
 	private final TransactionRepository transactionRepository;
-	private final TransactionItemRepository transactionItemRepository;
 	private final ProductRepository productRepository;
 	private final MerchantProfileRepository merchantProfileRepository;
+	private final MidtransFeignClient midtransFeignClient;
+
+
+	public MidtransSnapResponse createSnap(MidtransSnapRequest request) {
+		System.out.println(">>> createSnap called");
+		return midtransFeignClient.createTransaction(request);
+	}
+
+
 
 	// Buy now
 	@Transactional

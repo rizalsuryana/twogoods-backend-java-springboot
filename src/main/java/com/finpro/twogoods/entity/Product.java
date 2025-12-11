@@ -1,9 +1,9 @@
 package com.finpro.twogoods.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.finpro.twogoods.dto.response.ProductResponse;
 import com.finpro.twogoods.enums.Categories;
 import com.finpro.twogoods.enums.ProductCondition;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -55,18 +55,18 @@ public class Product extends BaseEntity {
 
 	public ProductResponse toResponse() {
 		return ProductResponse.builder()
-				.id(getId())
-				.merchantId(merchant != null ? merchant.getId() : null)
-				.name(name)
-				.description(description)
-				.price(price)
-				.categories(categories)
-				.color(color)
-				.isAvailable(isAvailable)
-				.condition(condition)
-				.images(images == null
-						? null
-						: images.stream().map(ProductImage::toResponse).toList())
-				.build();
+							  .id(getId())
+							  .merchantId(merchant != null ? merchant.getId() : null)
+							  .name(name)
+							  .description(description)
+							  .price(price)
+							  .categories(categories)
+							  .color(color)
+							  .isAvailable(isAvailable)
+							  .condition(condition)
+							  .images(images == null
+									  ? null
+									  : images.stream().map(ProductImage::toResponse).toList())
+							  .build();
 	}
 }

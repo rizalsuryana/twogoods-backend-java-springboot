@@ -1,5 +1,7 @@
 package com.finpro.twogoods.controller;
 
+import com.finpro.twogoods.client.dto.MidtransSnapRequest;
+import com.finpro.twogoods.client.dto.MidtransSnapResponse;
 import com.finpro.twogoods.dto.request.CreateTransactionRequest;
 import com.finpro.twogoods.dto.response.ApiResponse;
 import com.finpro.twogoods.dto.response.TransactionResponse;

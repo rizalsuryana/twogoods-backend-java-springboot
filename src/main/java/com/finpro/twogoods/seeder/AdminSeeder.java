@@ -30,14 +30,14 @@ public class AdminSeeder implements CommandLineRunner {
 	public void run(String... args) {
 		if (userRepository.existsByUsername(ADMIN_USERNAME)) return;
 		userRepository.save(User.builder()
-				.username(ADMIN_USERNAME)
-				.fullName(ADMIN_FULLNAME)
-				.email(ADMIN_USERNAME)
-				.password(passwordEncoder.encode(ADMIN_PASSWORD))
-				.role(UserRole.ADMIN)
-				.enabled(true)
-				.build()
-		);
+								.username(ADMIN_USERNAME)
+								.fullName(ADMIN_FULLNAME)
+								.email(ADMIN_USERNAME)
+								.password(passwordEncoder.encode(ADMIN_PASSWORD))
+								.role(UserRole.ADMIN)
+								.enabled(true)
+								.build()
+						   );
 
 		log.info("Admin user '{}' created!", ADMIN_USERNAME);
 	}

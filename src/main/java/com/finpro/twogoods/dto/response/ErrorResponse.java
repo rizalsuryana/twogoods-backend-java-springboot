@@ -9,6 +9,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class ErrorResponse {
-    private StatusResponse status;
-    private List<String> errors;
+	private StatusResponse status;
+	private List<String> errors;
 }

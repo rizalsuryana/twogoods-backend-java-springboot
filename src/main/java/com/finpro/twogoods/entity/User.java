@@ -1,10 +1,10 @@
 package com.finpro.twogoods.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.finpro.twogoods.dto.response.CustomerProfileResponse;
 import com.finpro.twogoods.dto.response.MerchantProfileResponse;
 import com.finpro.twogoods.dto.response.UserResponse;
 import com.finpro.twogoods.enums.UserRole;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -78,23 +78,23 @@ public class User extends BaseEntity implements UserDetails {
 
 	public UserResponse toResponse() {
 		MerchantProfileResponse merchantProfileResponse = merchantProfile != null
-				? merchantProfile.toResponse()
-				: null;
+														  ? merchantProfile.toResponse()
+														  : null;
 
 		CustomerProfileResponse customerProfileResponse = customerProfile != null
-				? customerProfile.toResponse()
-				: null;
+														  ? customerProfile.toResponse()
+														  : null;
 
 		return UserResponse.builder()
-				.id(getId())
-				.username(username)
-				.email(email)
-				.fullName(fullName)
-				.role(role)
-				.profilePicture(profilePicture)
-				.merchantProfile(merchantProfileResponse)
-				.customerProfile(customerProfileResponse)
-				.build();
+						   .id(getId())
+						   .username(username)
+						   .email(email)
+						   .fullName(fullName)
+						   .role(role)
+						   .profilePicture(profilePicture)
+						   .merchantProfile(merchantProfileResponse)
+						   .customerProfile(customerProfileResponse)
+						   .build();
 	}
 
 }

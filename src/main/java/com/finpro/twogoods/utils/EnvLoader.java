@@ -1,10 +1,9 @@
 package com.finpro.twogoods.utils;
 
-import java.io.*;
-import java.util.*;
-
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 
 public class EnvLoader {
 	public static void load(String path) {

@@ -7,10 +7,10 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class PagingResponse {
-    private Integer page;
-    private Integer rowsPerPage;
-    private Long totalRows;
-    private Integer totalPages;
-    private Boolean hasNext;
-    private Boolean hasPrevious;
+	private Integer page;
+	private Integer rowsPerPage;
+	private Long totalRows;
+	private Integer totalPages;
+	private Boolean hasNext;
+	private Boolean hasPrevious;
 }
