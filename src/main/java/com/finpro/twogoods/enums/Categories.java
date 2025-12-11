@@ -3,9 +3,9 @@ package com.finpro.twogoods.enums;
 public enum Categories {
 	Baby,
 	Child,
-	Adult,
-	Male,
-	Female,
+	Unisex,
+	Men,
+	Women,
 	Shirt,
 	Pants,
 	Accessory

@@ -1,11 +1,14 @@
 package com.finpro.twogoods.controller;
 
 import com.finpro.twogoods.dto.request.ProductRequest;
+import com.finpro.twogoods.dto.request.SuggestPriceRequest;
 import com.finpro.twogoods.dto.response.ApiResponse;
 import com.finpro.twogoods.dto.response.ProductImageResponse;
 import com.finpro.twogoods.dto.response.ProductResponse;
+import com.finpro.twogoods.dto.response.SuggestPriceResponse;
 import com.finpro.twogoods.enums.Categories;
 import com.finpro.twogoods.enums.ProductCondition;
+import com.finpro.twogoods.service.AiPriceService;
 import com.finpro.twogoods.service.ProductService;
 import com.finpro.twogoods.utils.ResponseUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,6 +34,7 @@ import java.util.List;
 public class ProductController {
 
 	private final ProductService productService;
+	private final AiPriceService aiPriceService;
 
 	@Operation(summary = "Create product", description = "Create a new product. Only MERCHANT users can create products.")
 	@PostMapping
@@ -199,4 +203,18 @@ public class ProductController {
 				null
 		);
 	}
+
+	@PostMapping("/suggest-price")
+	public ResponseEntity<ApiResponse<SuggestPriceResponse>> suggestPrice(
+			@RequestBody SuggestPriceRequest request
+	) {
+		SuggestPriceResponse response = aiPriceService.suggestPrice(request);
+
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				"Price suggestion generated",
+				response
+		);
+	}
+
 }

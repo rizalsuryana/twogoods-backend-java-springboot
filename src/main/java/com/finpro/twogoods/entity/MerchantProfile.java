@@ -52,3 +52,5 @@ public class MerchantProfile {
 									  .build();
 	}
 }
+
+//get all tambahin rating?

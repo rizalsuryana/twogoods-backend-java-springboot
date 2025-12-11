@@ -4,7 +4,6 @@ import com.finpro.twogoods.dto.response.ApiResponse;
 import com.finpro.twogoods.dto.response.MerchantProfileResponse;
 import com.finpro.twogoods.entity.MerchantProfile;
 import com.finpro.twogoods.entity.User;
-import com.finpro.twogoods.repository.MerchantReviewRepository;
 import com.finpro.twogoods.service.MerchantProfileService;
 import com.finpro.twogoods.utils.ResponseUtil;
 import lombok.RequiredArgsConstructor;
@@ -24,15 +23,14 @@ import java.util.List;
 public class MerchantProfileController {
 
 	private final MerchantProfileService merchantProfileService;
-	private final MerchantReviewRepository merchantReviewRepository;
 
 	//  GET PAGINATED
 	@GetMapping
-	public ResponseEntity<ApiResponse<List<MerchantProfile>>> getAllPaginated(
+	public ResponseEntity<ApiResponse<List<MerchantProfileResponse>>> getAllPaginated(
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size
 	) {
-		Page<MerchantProfile> profiles =
+		Page<MerchantProfileResponse> profiles =
 				merchantProfileService.getAllPaginated(PageRequest.of(page, size));
 
 		return ResponseUtil.buildPagedResponse(
@@ -42,10 +40,11 @@ public class MerchantProfileController {
 		);
 	}
 
-	//  GET ALL (non-paginated)
+	//  GET ALL
 	@GetMapping("/all")
-	public ResponseEntity<ApiResponse<List<MerchantProfile>>> getAll() {
-		List<MerchantProfile> profiles = merchantProfileService.getAllMerchantProfiles();
+	public ResponseEntity<ApiResponse<List<MerchantProfileResponse>>> getAll() {
+		List<MerchantProfileResponse> profiles =
+				merchantProfileService.getAllMerchantProfiles();
 
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.OK,
@@ -55,17 +54,9 @@ public class MerchantProfileController {
 	}
 
 	//  GET BY ID
-//	TODO :  GANTI....
 	@GetMapping("/{id}")
 	public ResponseEntity<ApiResponse<MerchantProfileResponse>> getById(@PathVariable Long id) {
-		MerchantProfile profile = merchantProfileService.getMerchantById(id);
-
-		Double avg = merchantReviewRepository.getAverageRating(id);
-		Long total = merchantReviewRepository.getTotalReviews(id);
-
-		MerchantProfileResponse response = profile.toResponse();
-		response.setRating(avg != null ? avg : 0);
-		response.setTotalReviews(total);
+		MerchantProfileResponse response = merchantProfileService.getMerchantById(id);
 
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.OK,
@@ -74,10 +65,9 @@ public class MerchantProfileController {
 		);
 	}
 
-
-	//  UPDATE (only owner)
+	//  UPDATE
 	@PutMapping("/{id}")
-	public ResponseEntity<ApiResponse<MerchantProfile>> update(
+	public ResponseEntity<ApiResponse<MerchantProfileResponse>> update(
 			@PathVariable Long id,
 			@RequestBody MerchantProfile merchantProfile,
 			Authentication auth
@@ -92,16 +82,17 @@ public class MerchantProfileController {
 			throw new AccessDeniedException("You can only update your own merchant profile");
 		}
 
-		MerchantProfile updated = merchantProfileService.updateMerchantProfile(id, merchantProfile);
+		MerchantProfileResponse response =
+				merchantProfileService.updateMerchantProfile(id, merchantProfile);
 
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.OK,
 				"Merchant profile updated successfully",
-				updated
+				response
 		);
 	}
 
-	//  DELETE (only owner)
+	//  DELETE
 	@DeleteMapping("/{id}")
 	public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id, Authentication auth) {
 		User user = (User) auth.getPrincipal();
@@ -122,6 +113,4 @@ public class MerchantProfileController {
 				null
 		);
 	}
-
-
 }
