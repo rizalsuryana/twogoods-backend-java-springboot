@@ -107,20 +107,4 @@ public class MerchantProfileController {
 		);
 	}
 
-
-//	update poto
-@PostMapping("/merchant/profile/{userId}/picture")
-public ResponseEntity<?> updateProfilePicture(
-		@PathVariable Long userId,
-		@RequestParam("file") MultipartFile file
-) {
-	return ResponseUtil.buildSingleResponse(
-			HttpStatus.OK,
-			"Profile picture updated",
-			userService.updateProfilePicture(userId, file)
-	);
-}
-
-
-
 }

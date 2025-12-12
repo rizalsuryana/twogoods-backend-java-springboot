@@ -18,8 +18,8 @@ public class UserRequest {
 	@NotBlank
 	private String fullName;
 
-	@NotBlank
-	private String profilePicture;
+//	@NotBlank
+//	private String profilePicture;
 
 	private String username;
 }

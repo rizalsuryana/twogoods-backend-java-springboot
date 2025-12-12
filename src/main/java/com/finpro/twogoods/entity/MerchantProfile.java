@@ -30,7 +30,6 @@ public class MerchantProfile {
 	@JsonBackReference
 	private User user;
 
-	@Column(nullable = false)
 	private String location;
 
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "merchant")
@@ -51,5 +50,3 @@ public class MerchantProfile {
 	}
 
 }
-
-//get all tambahin rating?

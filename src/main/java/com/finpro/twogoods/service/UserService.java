@@ -142,6 +142,7 @@ public class UserService implements UserDetailsService {
 
 		user.setProfilePicture(imageUrl);
 
+
 		return userRepository.save(user);
 	}
 
