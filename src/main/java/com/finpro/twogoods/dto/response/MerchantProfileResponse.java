@@ -20,5 +20,8 @@ public class MerchantProfileResponse {
 	private Float rating;
 	private Long totalReviews;
 	private String profilePicture;
+	private String ktpPhoto;
+	private Boolean isVerified;
+	private String rejectReason;
 	private List<ProductResponse> products;
 }

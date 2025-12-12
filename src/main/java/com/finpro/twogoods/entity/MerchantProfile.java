@@ -45,9 +45,9 @@ public class MerchantProfile {
 									  .email(user != null ? user.getEmail() : null)
 									  .profilePicture(user != null ? user.getProfilePicture() : null)
 									  .role(user != null ? user.getRole() : null)
-									  .products(products == null
-												? null
-												: products.stream().map(Product::toResponse).toList())
+				.products(products == null
+						? null
+						: products.stream().map(Product::toResponse).toList())
 									  .build();
 	}
 }

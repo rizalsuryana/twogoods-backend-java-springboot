@@ -31,23 +31,31 @@ public class SecurityConfig {
 										   .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 								  )
 				.authorizeHttpRequests(authorize -> authorize
-											   .requestMatchers(
-													   "/swagger-ui/**",
-													   "/v3/api-docs/**",
-													   "/api/v1/auth/**",
-													   "/api/v1/users",
-													   "/api/v1/products",
-													   "/api/v1/products/**",
-													   "/api/v1/merchant",
-													   "/api/v1/merchant/**",
-													   "/api/v1/customers",
-													   "/api/v1/customers/**",
-													   "/api/v1/transactions/snap",
-													   "/api/v1/midtrans/**"
-															   ).permitAll()
-											   .anyRequest().authenticated()
+						.requestMatchers(
+								"/swagger-ui/**",
+								"/v3/api-docs/**",
+								"/api/v1/auth/**",
+								"/api/v1/users"
+						).permitAll()
 
-									  )
+						//  PUBLIC: GET products
+						.requestMatchers("GET", "/api/v1/products/**").permitAll()
+
+						//  MERCHANT ONLY
+						.requestMatchers("POST", "/api/v1/products").hasRole("MERCHANT")
+						.requestMatchers("PUT", "/api/v1/products/**").hasRole("MERCHANT")
+						.requestMatchers("DELETE", "/api/v1/products/**").hasRole("MERCHANT")
+						.requestMatchers("POST", "/api/v1/products/*/upload-multi-images").hasRole("MERCHANT")
+						.requestMatchers("POST", "/api/v1/products/suggest-price").hasRole("MERCHANT")
+						.requestMatchers("/api/v1/merchant/**").hasRole("MERCHANT")
+						//  ADMIN ONLY
+						.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+						//  CUSTOMER ONLY
+						.requestMatchers("/api/v1/customers/**").hasRole("CUSTOMER")
+
+						.anyRequest().authenticated()
+				)
+
 				.exceptionHandling(ex -> ex
 										   .authenticationEntryPoint(jwtAuthenticationHandler.authenticationEntryPoint())
 										   .accessDeniedHandler(jwtAuthenticationHandler.accessDeniedHandler())

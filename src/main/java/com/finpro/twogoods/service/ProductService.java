@@ -52,6 +52,11 @@ public class ProductService {
 		MerchantProfile merchant = merchantProfileRepository.findByUser(user)
 				.orElseThrow(() -> new ResourceNotFoundException("Merchant profile not found"));
 
+		// BLOCK MERCHANT YANG BELUM VERIFIED
+		if (Boolean.FALSE.equals(merchant.getIsVerified())) {
+			throw new AccessDeniedException("Merchant is not verified. Cannot create product.");
+		}
+
 		Product product = Product.builder()
 				.merchant(merchant)
 				.name(request.getName())
@@ -66,6 +71,7 @@ public class ProductService {
 		return productRepository.save(product).toResponse();
 	}
 
+
 	// GET PRODUCT BY ID
 	@Transactional(readOnly = true)
 	public ProductResponse getProductById(Long id) {
@@ -73,7 +79,7 @@ public class ProductService {
 				.orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 		return product.toResponse();
 	}
-	// GET PRODUCTS WITH FILTER (multi-category + multi-keyword search)
+	// GET PRODUCTS WITH FILTER (multicategories + multi-keyword search)
 	@Transactional(readOnly = true)
 	public Page<ProductResponse> getProducts(
 			int page,
