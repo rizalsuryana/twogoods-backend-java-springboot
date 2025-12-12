@@ -1,5 +1,6 @@
 package com.finpro.twogoods.dto.response;
 
+import com.finpro.twogoods.client.dto.MidtransSnapResponse;
 import com.finpro.twogoods.enums.OrderStatus;
 import lombok.*;
 
@@ -21,6 +22,7 @@ public class TransactionResponse {
 	private BigDecimal totalPrice;
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
+	private MidtransSnapResponse midtransSnapResponse;
 
 	private List<TransactionItemResponse> items;
 }

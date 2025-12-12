@@ -1,17 +1,16 @@
 package com.finpro.twogoods.service;
 
-<<<<<<< HEAD
-import com.finpro.twogoods.client.dto.MidtransNotification;
-import com.finpro.twogoods.dto.request.CreateTransactionRequest;
-=======
->>>>>>> dca2e24 (ADD buy now DELETE create transaction)
+import com.finpro.twogoods.client.dto.MidtransSnapRequest;
+import com.finpro.twogoods.client.dto.MidtransSnapResponse;
 import com.finpro.twogoods.dto.response.TransactionResponse;
 import com.finpro.twogoods.entity.*;
 import com.finpro.twogoods.enums.OrderStatus;
 import com.finpro.twogoods.enums.UserRole;
 import com.finpro.twogoods.exceptions.ApiException;
 import com.finpro.twogoods.exceptions.ResourceNotFoundException;
-import com.finpro.twogoods.repository.*;
+import com.finpro.twogoods.repository.MerchantProfileRepository;
+import com.finpro.twogoods.repository.ProductRepository;
+import com.finpro.twogoods.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -21,14 +20,16 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class TransactionService {
 
 	private final TransactionRepository transactionRepository;
 	private final ProductRepository productRepository;
 	private final MerchantProfileRepository merchantProfileRepository;
+	private final MidtransService midtransService;
 
 	// Buy now
-	@Transactional
+	@Transactional(rollbackFor = Exception.class)
 	public TransactionResponse buyNow(Long productId) {
 		User user = getCurrentUser();
 
@@ -68,9 +69,28 @@ public class TransactionService {
 		product.setIsAvailable(false);
 		productRepository.save(product);
 
-		return saved.toResponse();
-	}
+		TransactionResponse res = saved.toResponse();
 
+		//Snap Request
+		MidtransSnapRequest.TransactionDetails details =
+				MidtransSnapRequest
+						.TransactionDetails.builder()
+										   .grossAmount(product.getPrice().intValue())
+										   .orderId("ORDER-" + (transactionRepository.count() == 0 ? 1 :
+																transactionRepository.count() + 1))
+										   .build();
+
+		MidtransSnapRequest req = MidtransSnapRequest.builder()
+													 .transactionDetails(details)
+													 .callbacks(new MidtransSnapRequest.Callbacks(
+															 "https://www.2goods.com"))
+													 .build();
+		MidtransSnapResponse midtransResponse = midtransService.createSnap(req);
+
+		res.setMidtransSnapResponse(midtransResponse);
+
+		return res;
+	}
 
 
 	// GET DETAIL TRANSACTION
