@@ -1,4 +1,4 @@
-package com.finpro.twogoods.helper;
+package com.finpro.twogoods.utils.helper;
 
 import com.finpro.twogoods.entity.User;
 

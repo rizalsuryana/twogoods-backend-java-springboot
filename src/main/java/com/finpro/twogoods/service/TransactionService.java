@@ -1,9 +1,6 @@
 package com.finpro.twogoods.service;
 
-import com.finpro.twogoods.client.MidtransFeignClient;
 import com.finpro.twogoods.client.dto.MidtransNotification;
-import com.finpro.twogoods.client.dto.MidtransSnapRequest;
-import com.finpro.twogoods.client.dto.MidtransSnapResponse;
 import com.finpro.twogoods.dto.request.CreateTransactionRequest;
 import com.finpro.twogoods.dto.response.TransactionResponse;
 import com.finpro.twogoods.entity.*;
@@ -126,31 +123,6 @@ public class TransactionService {
 				.toList();
 	}
 
-	@Transactional(rollbackFor = Exception.class)
-	public TransactionResponse updateStatus(MidtransNotification notif) {
-
-		Transaction trx = transactionRepository.findByOrderId(notif.getOrderId())
-							  .orElseThrow(() -> new RuntimeException("Order not found"));
-
-		switch (notif.getTransactionStatus()) {
-			case "settlement":
-			case "capture":
-				trx.setStatus(OrderStatus.PAID);
-				break;
-			case "pending":
-				trx.setStatus(OrderStatus.PENDING);
-				break;
-			case "expire":
-			case "cancel":
-			case "deny":
-				trx.setStatus(OrderStatus.CANCELED);
-				break;
-		}
-
-		Transaction transaction = transactionRepository.save(trx);
-
-		return transaction.toResponse();
-	}
 
 	// UPDATE STATUS
 	@Transactional(rollbackFor = Exception.class)
