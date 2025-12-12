@@ -101,7 +101,7 @@ public class TransactionService {
 		User currentUser = getCurrentUser();
 
 		Transaction trx = transactionRepository.findById(id)
-				.orElseThrow(() -> new ApiException("Transaction not found"));
+											   .orElseThrow(() -> new ApiException("Transaction not found"));
 
 		boolean isCustomer = trx.getCustomer().getId().equals(currentUser.getId());
 		boolean isMerchant = trx.getMerchant().getUser().getId().equals(currentUser.getId());
@@ -119,9 +119,9 @@ public class TransactionService {
 		User customer = getCurrentUser();
 
 		return transactionRepository.findByCustomer(customer)
-				.stream()
-				.map(Transaction::toResponse)
-				.toList();
+									.stream()
+									.map(Transaction::toResponse)
+									.toList();
 	}
 
 	// GET MERCHANT ORDERS
@@ -130,12 +130,13 @@ public class TransactionService {
 		User merchantUser = getCurrentUser();
 
 		MerchantProfile merchant = merchantProfileRepository.findByUser(merchantUser)
-				.orElseThrow(() -> new ApiException("Merchant profile not found"));
+															.orElseThrow(() -> new ApiException(
+																	"Merchant profile not found"));
 
 		return transactionRepository.findByMerchant(merchant)
-				.stream()
-				.map(Transaction::toResponse)
-				.toList();
+									.stream()
+									.map(Transaction::toResponse)
+									.toList();
 	}
 
 
@@ -146,7 +147,7 @@ public class TransactionService {
 		User currentUser = getCurrentUser();
 
 		Transaction trx = transactionRepository.findById(id)
-				.orElseThrow(() -> new ApiException("Transaction not found"));
+											   .orElseThrow(() -> new ApiException("Transaction not found"));
 
 		boolean isCustomer = trx.getCustomer().getId().equals(currentUser.getId());
 		boolean isMerchant = trx.getMerchant().getUser().getId().equals(currentUser.getId());
@@ -161,20 +162,19 @@ public class TransactionService {
 
 			case PAID:
 				if (!isMerchant) throw new ApiException("Only merchant can set PAID");
-				if (currentStatus != OrderStatus.PENDING)
-					throw new ApiException("PAID can only be set from PENDING");
+				if (currentStatus != OrderStatus.PENDING) {throw new ApiException("PAID can only be set from PENDING");}
 				break;
 
 			case SHIPPED:
 				if (!isMerchant) throw new ApiException("Only merchant can set SHIPPED");
-				if (currentStatus != OrderStatus.PAID)
-					throw new ApiException("SHIPPED can only be set from PAID");
+				if (currentStatus != OrderStatus.PAID) {throw new ApiException("SHIPPED can only be set from PAID");}
 				break;
 
 			case COMPLETED:
 				if (!isCustomer) throw new ApiException("Only customer can set COMPLETED");
-				if (currentStatus != OrderStatus.SHIPPED)
+				if (currentStatus != OrderStatus.SHIPPED) {
 					throw new ApiException("COMPLETED can only be set from SHIPPED");
+				}
 				break;
 
 			case CANCELED:
@@ -196,7 +196,7 @@ public class TransactionService {
 
 	private User getCurrentUser() {
 		return (User) SecurityContextHolder.getContext()
-				.getAuthentication()
-				.getPrincipal();
+										   .getAuthentication()
+										   .getPrincipal();
 	}
 }
