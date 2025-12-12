@@ -33,17 +33,7 @@ public class MidtransService {
 
 	@Transactional(rollbackFor = Exception.class)
 	public MidtransSnapResponse createSnap(MidtransSnapRequest request) {
-		mapVirtualAccounts(request.getVaDetails());
-
 		return midtransFeignClient.createTransaction(request);
-	}
-
-	private void mapVirtualAccounts(List<MidtransSnapRequest.VirtualAccount> vaDetails) {
-		if (vaDetails == null) return;
-
-		for (MidtransSnapRequest.VirtualAccount va : vaDetails) {
-			String bankKey = va.getBank().toLowerCase() + "_va";
-		}
 	}
 
 

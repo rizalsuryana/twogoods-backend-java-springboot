@@ -1,14 +1,16 @@
 package com.finpro.twogoods.service;
 
-import com.finpro.twogoods.client.dto.MidtransNotification;
-import com.finpro.twogoods.dto.request.CreateTransactionRequest;
+import com.finpro.twogoods.client.dto.MidtransSnapRequest;
+import com.finpro.twogoods.client.dto.MidtransSnapResponse;
 import com.finpro.twogoods.dto.response.TransactionResponse;
 import com.finpro.twogoods.entity.*;
 import com.finpro.twogoods.enums.OrderStatus;
 import com.finpro.twogoods.enums.UserRole;
 import com.finpro.twogoods.exceptions.ApiException;
 import com.finpro.twogoods.exceptions.ResourceNotFoundException;
-import com.finpro.twogoods.repository.*;
+import com.finpro.twogoods.repository.MerchantProfileRepository;
+import com.finpro.twogoods.repository.ProductRepository;
+import com.finpro.twogoods.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -18,14 +20,16 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class TransactionService {
 
 	private final TransactionRepository transactionRepository;
 	private final ProductRepository productRepository;
 	private final MerchantProfileRepository merchantProfileRepository;
+	private final MidtransService midtransService;
 
 	// Buy now
-	@Transactional
+	@Transactional(rollbackFor = Exception.class)
 	public TransactionResponse buyNow(Long productId) {
 		User user = getCurrentUser();
 
@@ -65,9 +69,28 @@ public class TransactionService {
 		product.setIsAvailable(false);
 		productRepository.save(product);
 
-		return saved.toResponse();
-	}
+		TransactionResponse res = saved.toResponse();
 
+		//Snap Request
+		MidtransSnapRequest.TransactionDetails details =
+				MidtransSnapRequest
+						.TransactionDetails.builder()
+										   .grossAmount(product.getPrice().intValue())
+										   .orderId("ORDER-" + (transactionRepository.count() == 0 ? 1 :
+																transactionRepository.count() + 1))
+										   .build();
+
+		MidtransSnapRequest req = MidtransSnapRequest.builder()
+													 .transactionDetails(details)
+													 .callbacks(new MidtransSnapRequest.Callbacks(
+															 "https://www.2goods.com"))
+													 .build();
+		MidtransSnapResponse midtransResponse = midtransService.createSnap(req);
+
+		res.setMidtransSnapResponse(midtransResponse);
+
+		return res;
+	}
 
 
 	// GET DETAIL TRANSACTION
@@ -77,7 +100,7 @@ public class TransactionService {
 		User currentUser = getCurrentUser();
 
 		Transaction trx = transactionRepository.findById(id)
-				.orElseThrow(() -> new ApiException("Transaction not found"));
+											   .orElseThrow(() -> new ApiException("Transaction not found"));
 
 		boolean isCustomer = trx.getCustomer().getId().equals(currentUser.getId());
 		boolean isMerchant = trx.getMerchant().getUser().getId().equals(currentUser.getId());
@@ -95,9 +118,9 @@ public class TransactionService {
 		User customer = getCurrentUser();
 
 		return transactionRepository.findByCustomer(customer)
-				.stream()
-				.map(Transaction::toResponse)
-				.toList();
+									.stream()
+									.map(Transaction::toResponse)
+									.toList();
 	}
 
 	// GET MERCHANT ORDERS
@@ -106,12 +129,13 @@ public class TransactionService {
 		User merchantUser = getCurrentUser();
 
 		MerchantProfile merchant = merchantProfileRepository.findByUser(merchantUser)
-				.orElseThrow(() -> new ApiException("Merchant profile not found"));
+															.orElseThrow(() -> new ApiException(
+																	"Merchant profile not found"));
 
 		return transactionRepository.findByMerchant(merchant)
-				.stream()
-				.map(Transaction::toResponse)
-				.toList();
+									.stream()
+									.map(Transaction::toResponse)
+									.toList();
 	}
 
 
@@ -122,7 +146,7 @@ public class TransactionService {
 		User currentUser = getCurrentUser();
 
 		Transaction trx = transactionRepository.findById(id)
-				.orElseThrow(() -> new ApiException("Transaction not found"));
+											   .orElseThrow(() -> new ApiException("Transaction not found"));
 
 		boolean isCustomer = trx.getCustomer().getId().equals(currentUser.getId());
 		boolean isMerchant = trx.getMerchant().getUser().getId().equals(currentUser.getId());
@@ -137,20 +161,19 @@ public class TransactionService {
 
 			case PAID:
 				if (!isMerchant) throw new ApiException("Only merchant can set PAID");
-				if (currentStatus != OrderStatus.PENDING)
-					throw new ApiException("PAID can only be set from PENDING");
+				if (currentStatus != OrderStatus.PENDING) {throw new ApiException("PAID can only be set from PENDING");}
 				break;
 
 			case SHIPPED:
 				if (!isMerchant) throw new ApiException("Only merchant can set SHIPPED");
-				if (currentStatus != OrderStatus.PAID)
-					throw new ApiException("SHIPPED can only be set from PAID");
+				if (currentStatus != OrderStatus.PAID) {throw new ApiException("SHIPPED can only be set from PAID");}
 				break;
 
 			case COMPLETED:
 				if (!isCustomer) throw new ApiException("Only customer can set COMPLETED");
-				if (currentStatus != OrderStatus.SHIPPED)
+				if (currentStatus != OrderStatus.SHIPPED) {
 					throw new ApiException("COMPLETED can only be set from SHIPPED");
+				}
 				break;
 
 			case CANCELED:
@@ -172,7 +195,7 @@ public class TransactionService {
 
 	private User getCurrentUser() {
 		return (User) SecurityContextHolder.getContext()
-				.getAuthentication()
-				.getPrincipal();
+										   .getAuthentication()
+										   .getPrincipal();
 	}
 }

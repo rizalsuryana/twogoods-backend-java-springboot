@@ -1,6 +1,7 @@
 package com.finpro.twogoods.controller;
 
 import com.finpro.twogoods.dto.response.ApiResponse;
+import com.finpro.twogoods.dto.response.CheckoutResponse;
 import com.finpro.twogoods.dto.response.TransactionResponse;
 import com.finpro.twogoods.service.CheckoutService;
 import com.finpro.twogoods.utils.ResponseUtil;
@@ -22,7 +23,7 @@ public class CheckoutController {
 	private final CheckoutService checkoutService;
 
 	@PostMapping
-	public ResponseEntity<ApiResponse<List<TransactionResponse>>> checkout(){
+	public ResponseEntity<ApiResponse<CheckoutResponse>> checkout(){
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.OK,
 				"Checkout successful",
