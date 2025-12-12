@@ -72,7 +72,10 @@ public class UserController {
 		);
 	}
 
-	@PutMapping("/{id}/profile-picture")
+	@PutMapping(
+			value = "/{id}/profile-picture",
+			consumes = "multipart/form-data"
+	)
 	public ResponseEntity<ApiResponse<UserResponse>> updateProfilePicture(
 			@PathVariable Long id,
 			@RequestParam("file") MultipartFile file,
@@ -92,5 +95,6 @@ public class UserController {
 				updated.toResponse()
 		);
 	}
+
 }
 
