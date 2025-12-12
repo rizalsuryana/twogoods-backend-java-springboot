@@ -72,7 +72,6 @@ public class ProductService {
 				.orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 		return product.toResponse();
 	}
-
 	// GET PRODUCTS WITH FILTER (multi-category + multi-keyword search)
 	@Transactional(readOnly = true)
 	public Page<ProductResponse> getProducts(
@@ -87,7 +86,7 @@ public class ProductService {
 			String sort
 	) {
 
-		// Normalisasi sort: handle null, "null", dan kosong
+		// Normalisasi sort
 		if (sort == null || "null".equalsIgnoreCase(sort) || sort.isBlank()) {
 			sort = "newest";
 		}
@@ -98,15 +97,13 @@ public class ProductService {
 			default -> PageRequest.of(page, size, Sort.by("createdAt").descending());
 		};
 
-		// AND chaining untuk semua filter
 		Specification<Product> spec = Specification.allOf();
 
-		// MULTI-KEYWORD SEARCH: "hoodie vintage black"
+		//  MULTI-KEYWORD SEARCH (AND)
 		if (search != null && !search.isBlank()) {
 			String[] keywords = search.trim().toLowerCase().split("\\s+");
 
 			spec = spec.and((root, query, cb) -> {
-//				criteria builder
 				var namePath = cb.lower(cb.coalesce(root.get("name"), ""));
 				List<Predicate> predicates = new ArrayList<>();
 
@@ -114,26 +111,30 @@ public class ProductService {
 					predicates.add(cb.like(namePath, "%" + keyword + "%"));
 				}
 
-				// Semua keyword harus match (AND)
 				return cb.and(predicates.toArray(Predicate[]::new));
 			});
 		}
 
-		// MULTI-CATEGORY FILTER (OR): categories=Male,Shirt
+//  MULTI-CATEGORY FILTER (AND): produk harus punya SEMUA kategori
 		if (categories != null && !categories.isEmpty()) {
 			spec = spec.and((root, query, cb) -> {
-				var join = root.join("categories"); // JOIN ke element collection
-				List<Predicate> predicates = new ArrayList<>();
+				query.distinct(true);
 
-				for (Categories cat : categories) {
-					predicates.add(cb.equal(join, cat));
-				}
+				var join = root.join("categories");
 
-				return cb.or(predicates.toArray(Predicate[]::new));
+				// hitung berapa kategori yang match
+				Predicate inCategories = join.in(categories);
+
+				// group by product.id dan HAVING count(distinct category) = jumlah kategori yang diminta
+				query.groupBy(root.get("id"));
+				query.having(cb.equal(cb.countDistinct(join), categories.size()));
+
+				return inCategories;
 			});
 		}
 
 
+		//  PRICE FILTERS
 		if (minPrice != null) {
 			spec = spec.and((root, query, cb) ->
 					cb.greaterThanOrEqualTo(root.get("price"), minPrice));
@@ -144,11 +145,13 @@ public class ProductService {
 					cb.lessThanOrEqualTo(root.get("price"), maxPrice));
 		}
 
+		//  CONDITION FILTER
 		if (condition != null) {
 			spec = spec.and((root, query, cb) ->
 					cb.equal(root.get("condition"), condition));
 		}
 
+		//  AVAILABILITY FILTER
 		if (isAvailable != null) {
 			spec = spec.and((root, query, cb) ->
 					cb.equal(root.get("isAvailable"), isAvailable));
@@ -158,6 +161,7 @@ public class ProductService {
 
 		return result.map(Product::toResponse);
 	}
+
 
 	// UPDATE PRODUCT
 	@Transactional(rollbackFor = Exception.class)

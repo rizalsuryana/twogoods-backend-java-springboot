@@ -167,31 +167,53 @@ public class ProductController {
 		);
 	}
 
-	@Operation(summary = "Upload single product image", description = "Upload a single image for a product. Only the owner merchant can upload.")
-	@PostMapping("/{productId}/upload-image")
-	public ResponseEntity<ApiResponse<ProductImageResponse>> uploadImage(
-			@PathVariable Long productId,
-			@RequestParam("file") MultipartFile file
-	) throws IOException {
-		return ResponseUtil.buildSingleResponse(
-				HttpStatus.OK,
-				"Image uploaded successfully",
-				productService.uploadProductImage(productId, file)
-		);
-	}
+//	@Operation(summary = "Upload single product image", description = "Upload a single image for a product. Only the owner merchant can upload.")
+//	@PostMapping(
+//			value = "/{productId}/upload-image",
+//			consumes = "multipart/form-data"
+//	)
+//	public ResponseEntity<ApiResponse<ProductImageResponse>> uploadImage(
+//			@PathVariable Long productId,
+//
+//			@Parameter(
+//					description = "Upload a single image file",
+//					required = true,
+//					schema = @Schema(type = "string", format = "binary")
+//			)
+//			@RequestParam("file") MultipartFile file
+//	) throws IOException {
+//
+//		return ResponseUtil.buildSingleResponse(
+//				HttpStatus.OK,
+//				"Image uploaded successfully",
+//				productService.uploadProductImage(productId, file)
+//		);
+//	}
+
 
 	@Operation(summary = "Upload multiple product images", description = "Upload multiple images for a product. Only the owner merchant can upload.")
-	@PostMapping("/{productId}/upload-multi-images")
+	@PostMapping(
+			value = "/{productId}/upload-multi-images",
+			consumes = "multipart/form-data"
+	)
 	public ResponseEntity<ApiResponse<List<ProductImageResponse>>> uploadMultiple(
 			@PathVariable Long productId,
-			@RequestParam("files") MultipartFile[] files
+
+			@Parameter(
+					description = "Upload multiple image files",
+					required = true,
+					array = @ArraySchema(schema = @Schema(type = "string", format = "binary"))
+			)
+			@RequestPart("files") MultipartFile[] files
 	) throws IOException {
+
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.OK,
 				"Images uploaded successfully",
 				productService.uploadMultipleImages(productId, files)
 		);
 	}
+
 
 	@Operation(summary = "Delete product image", description = "Delete a single product image by its ID.")
 	@DeleteMapping("/images/{imageId}")

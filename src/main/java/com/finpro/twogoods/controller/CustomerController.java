@@ -5,6 +5,7 @@ import com.finpro.twogoods.entity.CustomerProfile;
 import com.finpro.twogoods.entity.User;
 import com.finpro.twogoods.service.CustomerProfileService;
 import com.finpro.twogoods.utils.ResponseUtil;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/customers")
 @RequiredArgsConstructor
+@Tag(name="Customer-Profile")
 public class CustomerController {
 
 	private final CustomerProfileService customerProfileService;
