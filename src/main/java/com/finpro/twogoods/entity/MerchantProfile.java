@@ -22,7 +22,16 @@ public class MerchantProfile {
 	@Column(name = "nomor_ktp")
 	private String NIK;
 
-//	private float rating;
+	@Column(name = "ktp_photo")
+	private String ktpPhoto;
+
+	@Column(name = "is_verified")
+	private Boolean isVerified = false;
+
+	@Column(name = "reject_reason")
+	private String rejectReason;
+
+	private String location;
 
 	@OneToOne
 	@MapsId
@@ -30,23 +39,23 @@ public class MerchantProfile {
 	@JsonBackReference
 	private User user;
 
-	private String location;
-
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "merchant")
 	private List<Product> products;
 
 	public MerchantProfileResponse toResponse() {
 		return MerchantProfileResponse.builder()
 				.id(id)
-				.location(location)
 				.fullName(user != null ? user.getFullName() : null)
 				.email(user != null ? user.getEmail() : null)
 				.profilePicture(user != null ? user.getProfilePicture() : null)
 				.role(user != null ? user.getRole() : null)
-				.products(products == null
-						? null
-						: products.stream().map(Product::toResponse).toList())
+				.location(location)
+				.nik(NIK)
+				.ktpPhoto(ktpPhoto)
+				.isVerified(isVerified)
+				.rejectReason(rejectReason)
+				.products(products == null ? null :
+						products.stream().map(Product::toResponse).toList())
 				.build();
 	}
-
 }

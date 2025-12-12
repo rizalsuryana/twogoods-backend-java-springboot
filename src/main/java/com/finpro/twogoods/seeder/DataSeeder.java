@@ -36,6 +36,11 @@ public class DataSeeder implements CommandLineRunner {
 
 		if (userRepository.count() > 1) return;
 
+		//  ADMIN
+		User admin = createUser("admin@mail.com", "admin", "Super Admin", UserRole.ADMIN);
+		admin.setEnabled(true);
+		userRepository.save(admin);
+
 		//  CUSTOMER
 		User c1 = createUser("customer1@mail.com", "cust1", "Customer One", UserRole.CUSTOMER);
 		User c2 = createUser("customer2@mail.com", "cust2", "Customer Two", UserRole.CUSTOMER);
@@ -47,18 +52,41 @@ public class DataSeeder implements CommandLineRunner {
 				CustomerProfile.builder().user(c3).build()
 		));
 
-		//  MERCHANT
+		//  MERCHANT (belum diverifikasi, belum upload KTP)
 		User m1 = createUser("merchant1@mail.com", "merch1", "Merchant One", UserRole.MERCHANT);
 		User m2 = createUser("merchant2@mail.com", "merch2", "Merchant Two", UserRole.MERCHANT);
 		User m3 = createUser("merchant3@mail.com", "merch3", "Merchant Three", UserRole.MERCHANT);
 
-		MerchantProfile mp1 = MerchantProfile.builder().user(m1).location("Jakarta").NIK("111111").build();
-		MerchantProfile mp2 = MerchantProfile.builder().user(m2).location("Bandung").NIK("222222").build();
-		MerchantProfile mp3 = MerchantProfile.builder().user(m3).location("Surabaya").NIK("333333").build();
+		MerchantProfile mp1 = MerchantProfile.builder()
+				.user(m1)
+				.location("Jakarta")
+				.NIK("1111111111111111")
+				.ktpPhoto(null)
+				.isVerified(false)
+				.rejectReason(null)
+				.build();
+
+		MerchantProfile mp2 = MerchantProfile.builder()
+				.user(m2)
+				.location("Bandung")
+				.NIK("2222222222222222")
+				.ktpPhoto(null)
+				.isVerified(false)
+				.rejectReason(null)
+				.build();
+
+		MerchantProfile mp3 = MerchantProfile.builder()
+				.user(m3)
+				.location("Surabaya")
+				.NIK("3333333333333333")
+				.ktpPhoto(null)
+				.isVerified(false)
+				.rejectReason(null)
+				.build();
 
 		merchantProfileRepository.saveAll(List.of(mp1, mp2, mp3));
 
-		//  PRODUK (kategori random sesuai enum)
+		//  PRODUK
 		createProductsForMerchant(mp1, "Vintage Shirt");
 		createProductsForMerchant(mp2, "Sneakers");
 		createProductsForMerchant(mp3, "Hoodie");
@@ -132,8 +160,6 @@ public class DataSeeder implements CommandLineRunner {
 				.merchant(merchant)
 				.user(customer)
 				.transaction(trx)
-//				.rating(random.nextInt(3) + 3) // 3–5 int
-//				float ... 3.0 - 5.0
 				.rating(3f + random.nextFloat() * 2f)
 				.comment("Produk bagus, recommended!")
 				.build();

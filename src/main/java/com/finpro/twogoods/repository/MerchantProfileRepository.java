@@ -5,12 +5,17 @@ import com.finpro.twogoods.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface MerchantProfileRepository extends JpaRepository<MerchantProfile, Long> {
 
-	Optional<MerchantProfile> findMerchantProfileById (Long id);
+	Optional<MerchantProfile> findMerchantProfileById(Long id);
+
 	Optional<MerchantProfile> findByUser(User user);
 
+	List<MerchantProfile> findByIsVerifiedFalse();
+
+	List<MerchantProfile> findByIsVerifiedTrue();
 }
