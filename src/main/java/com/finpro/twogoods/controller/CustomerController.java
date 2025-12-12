@@ -1,5 +1,6 @@
 package com.finpro.twogoods.controller;
 
+import com.finpro.twogoods.dto.request.CustomerProfileUpdateRequest;
 import com.finpro.twogoods.dto.response.CustomerProfileResponse;
 import com.finpro.twogoods.entity.CustomerProfile;
 import com.finpro.twogoods.entity.User;
@@ -49,7 +50,7 @@ public class CustomerController {
 	@PutMapping("/{id}")
 	public ResponseEntity<?> updateCustomer(
 			@PathVariable Long id,
-			@RequestBody CustomerProfile customerProfile,
+			@RequestBody CustomerProfileUpdateRequest request,
 			Authentication auth
 	) {
 		User user = (User) auth.getPrincipal();
@@ -65,12 +66,13 @@ public class CustomerController {
 		}
 
 		CustomerProfileResponse response =
-				customerProfileService.updateCustomerProfile(id, customerProfile).toResponse();
+				customerProfileService.updateCustomerProfile(id, request).toResponse();
 
 		return ResponseUtil.buildSingleResponse(
-				HttpStatus.CREATED,
-				HttpStatus.CREATED.getReasonPhrase(),
-				response);
+				HttpStatus.OK,
+				"Customer profile updated successfully",
+				response
+		);
 	}
 
 	@DeleteMapping("/{id}")

@@ -3,6 +3,7 @@ package com.finpro.twogoods.service;
 import com.finpro.twogoods.dto.request.CustomerRegisterRequest;
 import com.finpro.twogoods.dto.request.MerchantRegisterRequest;
 import com.finpro.twogoods.dto.request.UserRequest;
+import com.finpro.twogoods.dto.response.MerchantProfileResponse;
 import com.finpro.twogoods.dto.response.UserResponse;
 import com.finpro.twogoods.entity.CustomerProfile;
 import com.finpro.twogoods.entity.MerchantProfile;
@@ -25,6 +26,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import com.finpro.twogoods.utils.*;
 
 import java.util.List;
 
@@ -96,9 +98,8 @@ public class UserService implements UserDetailsService {
 		merchantProfileRepository.save(
 				MerchantProfile.builder()
 						.user(user)
-						.location(request.getLocation())
-						.NIK(request.getNik())
-//						.rating(0)
+						.location(null)
+						.NIK(null)
 						.build()
 		);
 
@@ -138,12 +139,17 @@ public class UserService implements UserDetailsService {
 	public User updateProfilePicture(Long userId, MultipartFile file) {
 		User user = getUserById(userId);
 
+//		validate dari utils file validator
+		FileValidator.validateImage(file);
+
 		String imageUrl = cloudinaryService.uploadImage(file, "profile_pictures");
 
 		user.setProfilePicture(imageUrl);
 
+
 		return userRepository.save(user);
 	}
+
 
 
 	public Page<UserResponse> getAllUsers(int page, int size, String role, String search) {

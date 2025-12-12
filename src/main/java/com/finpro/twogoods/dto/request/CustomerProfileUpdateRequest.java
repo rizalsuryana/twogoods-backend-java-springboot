@@ -7,7 +7,6 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RatingRequest {
-	private Float rating;
-	private String comment;
+public class CustomerProfileUpdateRequest {
+	private String location;
 }

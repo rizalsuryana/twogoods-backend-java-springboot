@@ -12,12 +12,13 @@ import java.util.List;
 @Builder
 public class MerchantProfileResponse {
 	private Long id;
-	private Double rating;
-	private Long totalReviews;
-	private String location;
-	private String fullName;
-	private String email;
-	private String profilePicture;
 	private UserRole role;
+	private String fullName;
+	private String nik;
+	private String location;
+	private String email;
+	private Float rating;
+	private Long totalReviews;
+	private String profilePicture;
 	private List<ProductResponse> products;
 }

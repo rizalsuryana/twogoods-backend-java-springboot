@@ -14,6 +14,7 @@ import com.finpro.twogoods.exceptions.ResourceNotFoundException;
 import com.finpro.twogoods.repository.MerchantProfileRepository;
 import com.finpro.twogoods.repository.ProductImageRepository;
 import com.finpro.twogoods.repository.ProductRepository;
+import com.finpro.twogoods.utils.FileValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
@@ -199,28 +200,6 @@ public class ProductService {
 		productRepository.delete(product);
 	}
 
-	// UPLOAD IMAGE
-	@Transactional(rollbackFor = Exception.class)
-	public ProductImageResponse uploadProductImage(Long productId, MultipartFile file) throws IOException {
-
-		if (!isOwner(productId)) {
-			throw new AccessDeniedException("You can only upload images to your own product");
-		}
-
-		Product product = productRepository.findById(productId)
-				.orElseThrow(() -> new ResourceNotFoundException("Product not found"));
-
-		String imageUrl = cloudinaryService.uploadImage(file, "products");
-
-		ProductImage saved = productImageRepository.save(
-				ProductImage.builder()
-						.product(product)
-						.imageUrl(imageUrl)
-						.build()
-		);
-
-		return saved.toResponse();
-	}
 
 	// UPLOAD MULTIPLE IMAGES
 	@Transactional(rollbackFor = Exception.class)
@@ -236,6 +215,8 @@ public class ProductService {
 		List<ProductImageResponse> responses = new ArrayList<>();
 
 		for (MultipartFile file : files) {
+
+			FileValidator.validateImage(file);
 
 			String imageUrl = cloudinaryService.uploadImage(file, "products");
 

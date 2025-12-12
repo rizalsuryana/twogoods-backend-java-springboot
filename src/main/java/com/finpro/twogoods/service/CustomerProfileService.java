@@ -1,5 +1,6 @@
 package com.finpro.twogoods.service;
 
+import com.finpro.twogoods.dto.request.CustomerProfileUpdateRequest;
 import com.finpro.twogoods.dto.request.UserRequest;
 import com.finpro.twogoods.entity.CustomerProfile;
 import com.finpro.twogoods.exceptions.ResourceNotFoundException;
@@ -26,24 +27,17 @@ public class CustomerProfileService {
 	}
 
 	@Transactional(rollbackFor = Exception.class)
-	public CustomerProfile updateCustomerProfile(Long id, CustomerProfile customerProfile) {
+	public CustomerProfile updateCustomerProfile(Long id, CustomerProfileUpdateRequest request) {
 
 		CustomerProfile profile = getCustomerById(id);
 
-		UserRequest userRequest = UserRequest.builder()
-											 .profilePicture(customerProfile.getUser().getProfilePicture())
-											 .email(customerProfile.getUser().getEmail())
-											 .password(customerProfile.getUser().getPassword())
-											 .fullName(customerProfile.getUser().getFullName())
-											 .username(customerProfile.getUser().getUsername())
-											 .build();
-
-		userService.updateUser(customerProfile.getUser().getId(), userRequest);
-
-		profile.setLocation(customerProfile.getLocation());
+		if (request.getLocation() != null) {
+			profile.setLocation(request.getLocation());
+		}
 
 		return customerProfileRepository.save(profile);
 	}
+
 
 	public Page<CustomerProfile> getAllPaginated(Pageable pageable) {
 		return customerProfileRepository.findAll(pageable);
