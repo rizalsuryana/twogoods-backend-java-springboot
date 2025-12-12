@@ -1,34 +1,10 @@
 package com.finpro.twogoods.client.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 
 public class GeminiDto {
-
-	@Data
-	@NoArgsConstructor
-	@AllArgsConstructor
-	@Builder
-	public static class Question {
-		private String question;
-		private Long studentId;
-	}
-
-	@Data
-	@NoArgsConstructor
-	@AllArgsConstructor
-	@Builder
-	public static class Answer {
-		@NotBlank
-		private String answer;
-		private String modelVersion;
-		private String responseId;
-	}
 
 	@Data
 	@NoArgsConstructor

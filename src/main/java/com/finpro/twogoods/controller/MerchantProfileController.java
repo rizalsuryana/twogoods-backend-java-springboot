@@ -26,11 +26,11 @@ public class MerchantProfileController {
 
 	//  GET PAGINATED
 	@GetMapping
-	public ResponseEntity<ApiResponse<List<MerchantProfile>>> getAllPaginated(
+	public ResponseEntity<ApiResponse<List<MerchantProfileResponse>>> getAllPaginated(
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size
 	) {
-		Page<MerchantProfile> profiles =
+		Page<MerchantProfileResponse> profiles =
 				merchantProfileService.getAllPaginated(PageRequest.of(page, size));
 
 		return ResponseUtil.buildPagedResponse(
@@ -40,10 +40,11 @@ public class MerchantProfileController {
 		);
 	}
 
-	//  GET ALL (non-paginated)
+	//  GET ALL
 	@GetMapping("/all")
-	public ResponseEntity<ApiResponse<List<MerchantProfile>>> getAll() {
-		List<MerchantProfile> profiles = merchantProfileService.getAllMerchantProfiles();
+	public ResponseEntity<ApiResponse<List<MerchantProfileResponse>>> getAll() {
+		List<MerchantProfileResponse> profiles =
+				merchantProfileService.getAllMerchantProfiles();
 
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.OK,
@@ -55,18 +56,18 @@ public class MerchantProfileController {
 	//  GET BY ID
 	@GetMapping("/{id}")
 	public ResponseEntity<ApiResponse<MerchantProfileResponse>> getById(@PathVariable Long id) {
-		MerchantProfile profile = merchantProfileService.getMerchantById(id);
+		MerchantProfileResponse response = merchantProfileService.getMerchantById(id);
 
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.OK,
 				"Merchant profile fetched successfully",
-				profile.toResponse()
+				response
 		);
 	}
 
-	//  UPDATE (only owner)
+	//  UPDATE
 	@PutMapping("/{id}")
-	public ResponseEntity<ApiResponse<MerchantProfile>> update(
+	public ResponseEntity<ApiResponse<MerchantProfileResponse>> update(
 			@PathVariable Long id,
 			@RequestBody MerchantProfile merchantProfile,
 			Authentication auth
@@ -81,16 +82,17 @@ public class MerchantProfileController {
 			throw new AccessDeniedException("You can only update your own merchant profile");
 		}
 
-		MerchantProfile updated = merchantProfileService.updateMerchantProfile(id, merchantProfile);
+		MerchantProfileResponse response =
+				merchantProfileService.updateMerchantProfile(id, merchantProfile);
 
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.OK,
 				"Merchant profile updated successfully",
-				updated
+				response
 		);
 	}
 
-	//  DELETE (only owner)
+	//  DELETE
 	@DeleteMapping("/{id}")
 	public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id, Authentication auth) {
 		User user = (User) auth.getPrincipal();

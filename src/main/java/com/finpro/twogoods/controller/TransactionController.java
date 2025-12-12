@@ -26,25 +26,19 @@ public class TransactionController {
 
 	private final TransactionService transactionService;
 
-	// CREATE TRANSACTION
-	@Operation(
-			summary = "Create a new transaction",
-			description = """
-                    Create a transaction for a product.
-                    Only customers can create transactions.
-                    Product must be available.
-                    """
-	)
-	@PostMapping
-	public ResponseEntity<ApiResponse<TransactionResponse>> create(
-			@RequestBody CreateTransactionRequest request
+// Buy Now
+	@PostMapping("/buy-now/{productId}")
+	public ResponseEntity<ApiResponse<TransactionResponse>> buyNow(
+			@PathVariable Long productId
 	) {
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.CREATED,
-				"Transaction created successfully",
-				transactionService.createTransaction(request)
+				"Buy now successful",
+				transactionService.buyNow(productId)
 		);
 	}
+
+
 	// GET DETAIL TRANSACTION
 	@Operation(
 			summary = "Get transaction detail",

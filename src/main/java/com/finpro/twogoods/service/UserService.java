@@ -98,7 +98,7 @@ public class UserService implements UserDetailsService {
 						.user(user)
 						.location(request.getLocation())
 						.NIK(request.getNik())
-						.rating(0)
+//						.rating(0)
 						.build()
 		);
 
