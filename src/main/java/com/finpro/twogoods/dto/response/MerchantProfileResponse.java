@@ -12,7 +12,7 @@ import java.util.List;
 @Builder
 public class MerchantProfileResponse {
 	private Long id;
-	private Double rating;
+	private Float rating;
 	private Long totalReviews;
 	private String location;
 	private String fullName;

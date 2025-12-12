@@ -76,11 +76,14 @@ public class MerchantProfileService {
 	}
 
 	private MerchantProfileResponse buildResponse(MerchantProfile profile) {
-		Double avg = merchantReviewRepository.getAverageRating(profile.getId());
+		Float avg = merchantReviewRepository.getAverageRating(profile.getId());
 		Long total = merchantReviewRepository.getTotalReviews(profile.getId());
 
+//		format si float agar dibulatin 1 angka belkang koma
+		Float formatted = avg != null ? Math.round(avg * 10f) /10f : 0f;
+
 		MerchantProfileResponse response = profile.toResponse();
-		response.setRating(avg != null ? avg : 0);
+		response.setRating(formatted);
 		response.setTotalReviews(total);
 
 		return response;

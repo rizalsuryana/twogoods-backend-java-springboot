@@ -9,8 +9,9 @@ public interface MerchantReviewRepository extends JpaRepository<MerchantReview, 
 
 	boolean existsByTransaction(Transaction transaction);
 
-	@Query("SELECT AVG(r.rating) FROM MerchantReview r WHERE r.merchant.id = :merchantId")
-	Double getAverageRating(Long merchantId);
+	@Query("SELECT COALESCE(AVG(r.rating), 0) FROM MerchantReview r WHERE r.merchant.id = :merchantId")
+	Float getAverageRating(Long merchantId);
+
 
 	@Query("SELECT COUNT(r) FROM MerchantReview r WHERE r.merchant.id = :merchantId")
 	Long getTotalReviews(Long merchantId);

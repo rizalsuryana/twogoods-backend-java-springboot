@@ -132,7 +132,9 @@ public class DataSeeder implements CommandLineRunner {
 				.merchant(merchant)
 				.user(customer)
 				.transaction(trx)
-				.rating(random.nextInt(3) + 3) // 3–5
+//				.rating(random.nextInt(3) + 3) // 3–5 int
+//				float ... 3.0 - 5.0
+				.rating(3f + random.nextFloat() * 2f)
 				.comment("Produk bagus, recommended!")
 				.build();
 

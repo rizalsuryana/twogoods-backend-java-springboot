@@ -28,6 +28,6 @@ public class MerchantReview {
 	@JoinColumn(name = "transaction_id")
 	private Transaction transaction;
 
-	private Integer rating;
+	private Float rating;
 	private String comment;
 }

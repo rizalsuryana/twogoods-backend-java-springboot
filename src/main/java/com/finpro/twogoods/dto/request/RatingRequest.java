@@ -8,6 +8,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class RatingRequest {
-	private Integer rating;
+	private Float rating;
 	private String comment;
 }
