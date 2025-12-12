@@ -1,4 +1,4 @@
-package com.finpro.twogoods.mapper;
+package com.finpro.twogoods.utils.mapper;
 
 import com.finpro.twogoods.dto.response.UserResponse;
 import com.finpro.twogoods.entity.User;

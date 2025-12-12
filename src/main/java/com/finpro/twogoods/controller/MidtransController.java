@@ -26,7 +26,6 @@ import java.util.Map;
 public class MidtransController {
 
 	private final MidtransService midtransService;
-	private final TransactionService transactionService;
 
 	@Operation(
 			summary = "Test snap request",
@@ -34,7 +33,6 @@ public class MidtransController {
 	)
 	@PostMapping("/snap")
 	private ResponseEntity<ApiResponse<MidtransSnapResponse>> snap(@RequestBody MidtransSnapRequest request){
-		System.out.println(">>> Controller HIT");
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.OK,
 				HttpStatus.OK.getReasonPhrase(),
@@ -60,7 +58,7 @@ public class MidtransController {
 												   );
 		}
 
-		TransactionResponse trx = transactionService.updateStatus(notif);
+		TransactionResponse trx = midtransService.updateStatus(notif);
 
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.OK,
