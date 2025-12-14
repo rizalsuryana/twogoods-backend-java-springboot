@@ -19,6 +19,11 @@ public class MerchantProfile {
 
 	@Id
 	private Long id; // sama dengan user_id
+	@OneToOne
+	@MapsId
+	@JoinColumn(name = "user_id")
+	@JsonBackReference
+	private User user;
 
 	@Column(name = "nomor_ktp")
 	private String NIK;
@@ -34,11 +39,7 @@ public class MerchantProfile {
 
 	private String location;
 
-	@OneToOne
-	@MapsId
-	@JoinColumn(name = "user_id")
-	@JsonBackReference
-	private User user;
+
 
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "merchant")
 	private List<Product> products;

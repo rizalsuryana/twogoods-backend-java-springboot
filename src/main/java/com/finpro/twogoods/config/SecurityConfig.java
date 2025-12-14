@@ -37,8 +37,6 @@ public class SecurityConfig {
 						.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 				)
 				.authorizeHttpRequests(authorize -> authorize
-
-						// PUBLIC
 						.requestMatchers(
 								"/swagger-ui/**",
 								"/v3/api-docs/**",
@@ -46,13 +44,10 @@ public class SecurityConfig {
 								"/api/v1/users"
 						).permitAll()
 
-						// PUBLIC GET PRODUCTS
 						.requestMatchers("GET", "/api/v1/products/**").permitAll()
 
-						// CUSTOMER ONLY
 						.requestMatchers("/api/v1/customers/**").hasRole("CUSTOMER")
 
-						// MERCHANT ONLY
 						.requestMatchers("POST", "/api/v1/products").hasRole("MERCHANT")
 						.requestMatchers("PUT", "/api/v1/products/**").hasRole("MERCHANT")
 						.requestMatchers("DELETE", "/api/v1/products/**").hasRole("MERCHANT")
@@ -60,13 +55,14 @@ public class SecurityConfig {
 						.requestMatchers("POST", "/api/v1/products/suggest-price").hasRole("MERCHANT")
 						.requestMatchers("/api/v1/merchant/**").hasRole("MERCHANT")
 
-						// ADMIN ONLY
+						.requestMatchers("POST", "/api/v1/transactions/**").hasRole("CUSTOMER")
+						.requestMatchers("GET", "/api/v1/transactions/merchant").hasRole("MERCHANT")
+						.requestMatchers("GET", "/api/v1/transactions/me").hasRole("CUSTOMER")
+						.requestMatchers("GET", "/api/v1/transactions/**").authenticated()
+
 						.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
-						// FALLBACK: ADMIN ONLY
-						.requestMatchers("/api/**").hasRole("ADMIN")
-
-						.anyRequest().authenticated()
+						.anyRequest().hasAnyRole("ADMIN", "MERCHANT", "CUSTOMER")
 				)
 				.exceptionHandling(ex -> ex
 						.authenticationEntryPoint(jwtAuthenticationHandler.authenticationEntryPoint())
