@@ -1,5 +1,6 @@
 package com.finpro.twogoods.dto.response;
 
+import com.finpro.twogoods.enums.MerchantStatus;
 import com.finpro.twogoods.enums.UserRole;
 import lombok.*;
 
@@ -21,7 +22,7 @@ public class MerchantProfileResponse {
 	private Long totalReviews;
 	private String profilePicture;
 	private String ktpPhoto;
-	private Boolean isVerified;
+	private MerchantStatus isVerified;
 	private String rejectReason;
 	private List<ProductResponse> products;
 }

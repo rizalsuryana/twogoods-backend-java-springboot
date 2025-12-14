@@ -3,6 +3,7 @@ package com.finpro.twogoods.service;
 import com.finpro.twogoods.dto.request.MerchantProfileUpdateRequest;
 import com.finpro.twogoods.dto.response.MerchantProfileResponse;
 import com.finpro.twogoods.entity.MerchantProfile;
+import com.finpro.twogoods.enums.MerchantStatus;
 import com.finpro.twogoods.exceptions.ResourceNotFoundException;
 import com.finpro.twogoods.repository.MerchantProfileRepository;
 import com.finpro.twogoods.repository.MerchantReviewRepository;
@@ -24,7 +25,8 @@ public class MerchantProfileService {
 
 	public MerchantProfileResponse getMerchantById(Long id) {
 		MerchantProfile profile = merchantProfileRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Merchant not found"));
+														   .orElseThrow(() -> new ResourceNotFoundException(
+																   "Merchant not found"));
 
 		return buildResponse(profile);
 	}
@@ -33,7 +35,8 @@ public class MerchantProfileService {
 	public MerchantProfileResponse updateMerchantProfile(Long id, MerchantProfileUpdateRequest request) {
 
 		MerchantProfile profile = merchantProfileRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Merchant not found"));
+														   .orElseThrow(() -> new ResourceNotFoundException(
+																   "Merchant not found"));
 
 		if (request.getNik() != null) {
 			profile.setNIK(request.getNik());
@@ -48,21 +51,33 @@ public class MerchantProfileService {
 		return buildResponse(saved);
 	}
 
+	public MerchantProfileResponse request(Long id) {
+		MerchantProfile profile = merchantProfileRepository.findMerchantProfileById(id)
+														   .orElseThrow(() -> new ResourceNotFoundException(
+																   "Merchant not found"));
+		if(profile.getNIK() == null || profile.getLocation() == null) {
+			throw new IllegalArgumentException("NIK or Location required");
+		}
+		profile.setIsVerified(MerchantStatus.PENDING);
+		return buildResponse(profile);
+	}
+
 	public Page<MerchantProfileResponse> getAllPaginated(Pageable pageable) {
 		return merchantProfileRepository.findAll(pageable)
-				.map(this::buildResponse);
+										.map(this::buildResponse);
 	}
 
 	public List<MerchantProfileResponse> getAllMerchantProfiles() {
 		return merchantProfileRepository.findAll().stream()
-				.map(this::buildResponse)
-				.toList();
+										.map(this::buildResponse)
+										.toList();
 	}
 
 	@Transactional(rollbackFor = Exception.class)
 	public void deleteMerchantProfileById(Long id) {
 		MerchantProfile profile = merchantProfileRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Merchant not found"));
+														   .orElseThrow(() -> new ResourceNotFoundException(
+																   "Merchant not found"));
 
 		merchantProfileRepository.delete(profile);
 	}

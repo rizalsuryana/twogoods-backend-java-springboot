@@ -46,6 +46,17 @@ public class MerchantProfileController {
 		);
 	}
 
+	@PutMapping
+	public ResponseEntity<ApiResponse<MerchantProfileResponse>> requestVerification(
+			@RequestParam Long id
+	) {
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				HttpStatus.OK.getReasonPhrase(),
+				merchantProfileService.request(id)
+											   );
+	}
+
 	//  GET ALL
 	@GetMapping("/all")
 	public ResponseEntity<ApiResponse<List<MerchantProfileResponse>>> getAll() {

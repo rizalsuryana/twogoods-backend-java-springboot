@@ -2,6 +2,7 @@ package com.finpro.twogoods.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.finpro.twogoods.dto.response.MerchantProfileResponse;
+import com.finpro.twogoods.enums.MerchantStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -26,7 +27,7 @@ public class MerchantProfile {
 	private String ktpPhoto;
 
 	@Column(name = "is_verified")
-	private Boolean isVerified = false;
+	private MerchantStatus isVerified = MerchantStatus.NEW;
 
 	@Column(name = "reject_reason")
 	private String rejectReason;

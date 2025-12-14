@@ -31,13 +31,15 @@ public class SecurityConfig {
 										   .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 								  )
 				.authorizeHttpRequests(authorize -> authorize
-						.requestMatchers(
+						 .requestMatchers(
 								"/swagger-ui/**",
 								"/v3/api-docs/**",
 								"/api/v1/auth/**",
 								"/api/v1/users"
 						).permitAll()
 
+						.requestMatchers("/api/**").hasRole("ADMIN")
+						 
 						//  PUBLIC: GET products
 						.requestMatchers("GET", "/api/v1/products/**").permitAll()
 

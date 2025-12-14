@@ -8,7 +8,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
-@Service @RequiredArgsConstructor @Transactional(readOnly = true) public class CloudinaryService {
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class CloudinaryService {
 
 	private final Cloudinary cloudinary;
 

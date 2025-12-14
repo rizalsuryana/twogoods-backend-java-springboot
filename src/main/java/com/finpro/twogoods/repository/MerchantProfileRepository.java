@@ -2,6 +2,7 @@ package com.finpro.twogoods.repository;
 
 import com.finpro.twogoods.entity.MerchantProfile;
 import com.finpro.twogoods.entity.User;
+import com.finpro.twogoods.enums.MerchantStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -15,7 +16,6 @@ public interface MerchantProfileRepository extends JpaRepository<MerchantProfile
 
 	Optional<MerchantProfile> findByUser(User user);
 
-	List<MerchantProfile> findByIsVerifiedFalse();
+	List<MerchantProfile> findByIsVerified(MerchantStatus isVerified);
 
-	List<MerchantProfile> findByIsVerifiedTrue();
 }

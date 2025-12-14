@@ -1,10 +1,7 @@
 package com.finpro.twogoods.seeder;
 
 import com.finpro.twogoods.entity.*;
-import com.finpro.twogoods.enums.Categories;
-import com.finpro.twogoods.enums.ProductCondition;
-import com.finpro.twogoods.enums.UserRole;
-import com.finpro.twogoods.enums.OrderStatus;
+import com.finpro.twogoods.enums.*;
 import com.finpro.twogoods.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
@@ -58,7 +55,7 @@ public class DataSeeder implements CommandLineRunner {
 				.location("Jakarta")
 				.NIK("1111111111111111")
 				.ktpPhoto(null)
-				.isVerified(false)
+				.isVerified(MerchantStatus.PENDING)
 				.rejectReason(null)
 				.build();
 
@@ -67,7 +64,7 @@ public class DataSeeder implements CommandLineRunner {
 				.location("Bandung")
 				.NIK("2222222222222222")
 				.ktpPhoto(null)
-				.isVerified(false)
+				.isVerified(MerchantStatus.NEW)
 				.rejectReason(null)
 				.build();
 
@@ -76,7 +73,7 @@ public class DataSeeder implements CommandLineRunner {
 				.location("Surabaya")
 				.NIK("3333333333333333")
 				.ktpPhoto(null)
-				.isVerified(false)
+				.isVerified(MerchantStatus.PENDING)
 				.rejectReason(null)
 				.build();
 

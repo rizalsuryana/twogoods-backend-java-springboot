@@ -2,6 +2,7 @@ package com.finpro.twogoods.service;
 
 import com.finpro.twogoods.dto.response.MerchantProfileResponse;
 import com.finpro.twogoods.entity.MerchantProfile;
+import com.finpro.twogoods.enums.MerchantStatus;
 import com.finpro.twogoods.exceptions.ApiException;
 import com.finpro.twogoods.exceptions.ResourceNotFoundException;
 import com.finpro.twogoods.repository.MerchantProfileRepository;
@@ -24,14 +25,14 @@ public class AdminMerchantService {
 	}
 
 	public List<MerchantProfileResponse> getPending() {
-		return merchantProfileRepository.findByIsVerifiedFalse()
+		return merchantProfileRepository.findByIsVerified(MerchantStatus.PENDING)
 				.stream()
 				.map(MerchantProfile::toResponse)
 				.toList();
 	}
 
 	public List<MerchantProfileResponse> getVerified() {
-		return merchantProfileRepository.findByIsVerifiedTrue()
+		return merchantProfileRepository.findByIsVerified(MerchantStatus.ACCEPTED)
 				.stream()
 				.map(MerchantProfile::toResponse)
 				.toList();
@@ -46,7 +47,7 @@ public class AdminMerchantService {
 			throw new ApiException("Merchant has not submitted NIK or KTP photo");
 		}
 
-		merchant.setIsVerified(true);
+		merchant.setIsVerified(MerchantStatus.ACCEPTED);
 		merchant.setRejectReason(null);
 	}
 
@@ -55,7 +56,7 @@ public class AdminMerchantService {
 		MerchantProfile merchant = merchantProfileRepository.findById(merchantId)
 				.orElseThrow(() -> new ResourceNotFoundException("Merchant not found"));
 
-		merchant.setIsVerified(false);
+		merchant.setIsVerified(MerchantStatus.REJECTED);
 		merchant.setRejectReason(reason);
 	}
 
