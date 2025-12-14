@@ -5,6 +5,7 @@ import com.finpro.twogoods.security.JwtAuthenticationHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -44,21 +45,21 @@ public class SecurityConfig {
 								"/api/v1/users"
 						).permitAll()
 
-						.requestMatchers("GET", "/api/v1/products/**").permitAll()
+						.requestMatchers(HttpMethod.GET, "/api/v1/products/**").permitAll()
 
 						.requestMatchers("/api/v1/customers/**").hasRole("CUSTOMER")
 
-						.requestMatchers("POST", "/api/v1/products").hasRole("MERCHANT")
-						.requestMatchers("PUT", "/api/v1/products/**").hasRole("MERCHANT")
-						.requestMatchers("DELETE", "/api/v1/products/**").hasRole("MERCHANT")
-						.requestMatchers("POST", "/api/v1/products/*/upload-multi-images").hasRole("MERCHANT")
-						.requestMatchers("POST", "/api/v1/products/suggest-price").hasRole("MERCHANT")
+						.requestMatchers(HttpMethod.POST, "/api/v1/products").hasRole("MERCHANT")
+						.requestMatchers(HttpMethod.PUT, "/api/v1/products/**").hasRole("MERCHANT")
+						.requestMatchers(HttpMethod.DELETE, "/api/v1/products/**").hasRole("MERCHANT")
+						.requestMatchers(HttpMethod.POST, "/api/v1/products/*/upload-multi-images").hasRole("MERCHANT")
+						.requestMatchers(HttpMethod.POST, "/api/v1/products/suggest-price").hasRole("MERCHANT")
 						.requestMatchers("/api/v1/merchant/**").hasRole("MERCHANT")
 
-						.requestMatchers("POST", "/api/v1/transactions/**").hasRole("CUSTOMER")
-						.requestMatchers("GET", "/api/v1/transactions/merchant").hasRole("MERCHANT")
-						.requestMatchers("GET", "/api/v1/transactions/me").hasRole("CUSTOMER")
-						.requestMatchers("GET", "/api/v1/transactions/**").authenticated()
+						.requestMatchers(HttpMethod.POST, "/api/v1/transactions/**").hasRole("CUSTOMER")
+						.requestMatchers(HttpMethod.GET, "/api/v1/transactions/merchant").hasRole("MERCHANT")
+						.requestMatchers(HttpMethod.GET, "/api/v1/transactions/me").hasRole("CUSTOMER")
+						.requestMatchers(HttpMethod.GET, "/api/v1/transactions/**").authenticated()
 
 						.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 

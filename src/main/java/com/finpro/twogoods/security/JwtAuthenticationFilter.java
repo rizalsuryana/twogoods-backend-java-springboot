@@ -31,16 +31,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			@NonNull HttpServletRequest request,
 			@NonNull HttpServletResponse response,
 			@NonNull FilterChain filterChain
-								   ) throws ServletException, IOException {
+	) throws ServletException, IOException {
+
+		String header = request.getHeader("Authorization");
+		if (header == null || !header.startsWith("Bearer ")) {
+			filterChain.doFilter(request, response);
+			return;
+		}
+
+		String tokenJwt = header.substring(7);
+
 		try {
-			String header = request.getHeader("Authorization");
-			if (header == null || !header.startsWith("Bearer ")) {
-				filterChain.doFilter(request, response);
-				return;
-			}
-
-			String tokenJwt = header.substring(7);
-
 			if (jwtTokenProvider.verifyToken(tokenJwt)) {
 				String email = jwtTokenProvider.extractEmail(tokenJwt);
 				log.debug("JWT subject (email) = {}", email);
@@ -54,20 +55,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 									null,
 									user.getAuthorities()
 							);
-
+					log.info("AUTH USER = {}", user.getEmail());
+					log.info("AUTH ROLE = {}", user.getAuthorities());
 					authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 					SecurityContextHolder.getContext().setAuthentication(authentication);
 				}
 			}
-
-			filterChain.doFilter(request, response);
 		} catch (JwtAuthenticationException e) {
 			log.error("JWT Authentication failed: {}", e.getMessage());
+
 			request.setAttribute("jwtException", e);
-			filterChain.doFilter(request, response);
 		} catch (Exception e) {
 			log.error("Cannot set user authentication: {}", e.getMessage());
-			filterChain.doFilter(request, response);
+
 		}
+
+		filterChain.doFilter(request, response);
 	}
 }

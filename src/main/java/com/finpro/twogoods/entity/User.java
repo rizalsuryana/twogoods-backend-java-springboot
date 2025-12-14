@@ -43,13 +43,14 @@ public class User extends BaseEntity implements UserDetails {
 	@Column(nullable = false)
 	private boolean enabled = true;
 
-	@OneToOne(mappedBy = "user")
+	@OneToOne(mappedBy = "user", optional = true)
 	@JsonManagedReference
 	private CustomerProfile customerProfile;
 
-	@OneToOne(mappedBy = "user")
+	@OneToOne(mappedBy = "user", optional = true)
 	@JsonManagedReference
 	private MerchantProfile merchantProfile;
+
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {

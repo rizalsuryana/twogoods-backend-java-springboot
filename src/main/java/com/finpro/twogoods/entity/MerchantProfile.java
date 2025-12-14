@@ -19,11 +19,13 @@ public class MerchantProfile {
 
 	@Id
 	private Long id; // sama dengan user_id
-	@OneToOne
+
+	@OneToOne(optional = true)
 	@MapsId
 	@JoinColumn(name = "user_id")
 	@JsonBackReference
 	private User user;
+
 
 	@Column(name = "nomor_ktp")
 	private String NIK;

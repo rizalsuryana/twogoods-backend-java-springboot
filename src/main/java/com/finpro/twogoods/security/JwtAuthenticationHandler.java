@@ -2,6 +2,7 @@ package com.finpro.twogoods.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finpro.twogoods.dto.response.ErrorResponse;
+import com.finpro.twogoods.exceptions.JwtAuthenticationException;
 import com.finpro.twogoods.utils.ResponseUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
@@ -15,31 +16,45 @@ import java.util.Objects;
 
 @Component
 public class JwtAuthenticationHandler {
-    private final ObjectMapper objectMapper = new ObjectMapper();
+	private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public AuthenticationEntryPoint authenticationEntryPoint() {
-        return (request, response, authException) ->
-                writeErrorResponse(response,
-                        Objects.requireNonNull(ResponseUtil.buildErrorResponse(
-                                        HttpStatus.UNAUTHORIZED,
-                                        "Unauthorized - Invalid or missing token",
-                                        List.of("You must provide a valid access token"))
-                                .getBody()));
-    }
+	public AuthenticationEntryPoint authenticationEntryPoint() {
+		return (request, response, authException) -> {
+			// Cek jika ada custom JWT exception dari filter
+			Object jwtException = request.getAttribute("jwtException");
 
-    public AccessDeniedHandler accessDeniedHandler() {
-        return (request, response, accessDeniedException) ->
-                writeErrorResponse(response,
-                        Objects.requireNonNull(ResponseUtil.buildErrorResponse(
-                                        HttpStatus.FORBIDDEN,
-                                        "Forbidden - Access denied",
-                                        List.of("You do not have permission to access this resource"))
-                                .getBody()));
-    }
+			if (jwtException instanceof JwtAuthenticationException jwtAuthEx) {
+				writeErrorResponse(response,
+						Objects.requireNonNull(ResponseUtil.buildErrorResponse(
+										HttpStatus.UNAUTHORIZED,
+										"Unauthorized - Invalid token",
+										List.of(jwtAuthEx.getMessage()))
+								.getBody()));
+			} else {
+				// Default Spring Security Authentication Failure
+				writeErrorResponse(response,
+						Objects.requireNonNull(ResponseUtil.buildErrorResponse(
+										HttpStatus.UNAUTHORIZED,
+										"Unauthorized - Invalid or missing token",
+										List.of("You must provide a valid access token"))
+								.getBody()));
+			}
+		};
+	}
 
-    private void writeErrorResponse(HttpServletResponse response, ErrorResponse errorResponse) throws IOException {
-        response.setStatus(errorResponse.getStatus().getCode());
-        response.setContentType("application/json");
-        objectMapper.writeValue(response.getOutputStream(), errorResponse);
-    }
+	public AccessDeniedHandler accessDeniedHandler() {
+		return (request, response, accessDeniedException) ->
+				writeErrorResponse(response,
+						Objects.requireNonNull(ResponseUtil.buildErrorResponse(
+										HttpStatus.FORBIDDEN,
+										"Forbidden - Access denied",
+										List.of("You do not have permission to access this resource"))
+								.getBody()));
+	}
+
+	private void writeErrorResponse(HttpServletResponse response, ErrorResponse errorResponse) throws IOException {
+		response.setStatus(errorResponse.getStatus().getCode());
+		response.setContentType("application/json");
+		objectMapper.writeValue(response.getOutputStream(), errorResponse);
+	}
 }
