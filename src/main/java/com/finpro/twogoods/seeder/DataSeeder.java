@@ -33,7 +33,7 @@ public class DataSeeder implements CommandLineRunner {
 
 		if (userRepository.count() > 1) return;
 
-		//  CUSTOMER
+		// CUSTOMER
 		User c1 = createUser("customer1@mail.com", "cust1", "Customer One", UserRole.CUSTOMER);
 		User c2 = createUser("customer2@mail.com", "cust2", "Customer Two", UserRole.CUSTOMER);
 		User c3 = createUser("customer3@mail.com", "cust3", "Customer Three", UserRole.CUSTOMER);
@@ -44,18 +44,18 @@ public class DataSeeder implements CommandLineRunner {
 				CustomerProfile.builder().user(c3).build()
 		));
 
-
-		//  MERCHANT (belum diverifikasi, belum upload KTP)
+		// MERCHANTS
 		User m1 = createUser("merchant1@mail.com", "merch1", "Merchant One", UserRole.MERCHANT);
 		User m2 = createUser("merchant2@mail.com", "merch2", "Merchant Two", UserRole.MERCHANT);
 		User m3 = createUser("merchant3@mail.com", "merch3", "Merchant Three", UserRole.MERCHANT);
 
+		// 2 merchant ACCEPTED
 		MerchantProfile mp1 = MerchantProfile.builder()
 				.user(m1)
 				.location("Jakarta")
 				.NIK("1111111111111111")
 				.ktpPhoto(null)
-				.isVerified(MerchantStatus.PENDING)
+				.isVerified(MerchantStatus.ACCEPTED)
 				.rejectReason(null)
 				.build();
 
@@ -64,10 +64,11 @@ public class DataSeeder implements CommandLineRunner {
 				.location("Bandung")
 				.NIK("2222222222222222")
 				.ktpPhoto(null)
-				.isVerified(MerchantStatus.NEW)
+				.isVerified(MerchantStatus.ACCEPTED)
 				.rejectReason(null)
 				.build();
 
+		// 1 merchant PENDING (tidak boleh jualan)
 		MerchantProfile mp3 = MerchantProfile.builder()
 				.user(m3)
 				.location("Surabaya")
@@ -79,17 +80,18 @@ public class DataSeeder implements CommandLineRunner {
 
 		merchantProfileRepository.saveAll(List.of(mp1, mp2, mp3));
 
-		//  PRODUK
+		// Produk hanya untuk merchant ACCEPTED
 		createProductsForMerchant(mp1, "Vintage Shirt");
 		createProductsForMerchant(mp2, "Sneakers");
-		createProductsForMerchant(mp3, "Hoodie");
 
-		//  TRANSAKSI + RATING
+		// Merchant mp3 tidak dibuatkan produk karena status PENDING
+
+		// Transaksi dan rating
 		createDummyTransactionAndRating(c1, mp1);
 		createDummyTransactionAndRating(c2, mp2);
 		createDummyTransactionAndRating(c3, mp3);
 
-		System.out.println(" Seeder selesai!");
+		System.out.println("Seeder selesai");
 	}
 
 	private User createUser(String email, String username, String name, UserRole role) {
@@ -105,6 +107,10 @@ public class DataSeeder implements CommandLineRunner {
 	}
 
 	private void createProductsForMerchant(MerchantProfile merchant, String baseName) {
+
+		if (merchant.getIsVerified() != MerchantStatus.ACCEPTED) {
+			return;
+		}
 
 		Categories[] allCategories = Categories.values();
 
@@ -154,7 +160,7 @@ public class DataSeeder implements CommandLineRunner {
 				.user(customer)
 				.transaction(trx)
 				.rating(3f + random.nextFloat() * 2f)
-				.comment("Produk bagus, recommended!")
+				.comment("Produk bagus, recommended")
 				.build();
 
 		reviewRepository.save(review);
