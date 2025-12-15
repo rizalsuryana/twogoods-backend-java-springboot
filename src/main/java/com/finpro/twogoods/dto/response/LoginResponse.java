@@ -1,6 +1,7 @@
 package com.finpro.twogoods.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.finpro.twogoods.enums.MerchantStatus;
 import lombok.*;
 
 @Getter @Setter
@@ -28,5 +29,7 @@ public class LoginResponse {
 		private String name;
 		private String profilePicture;
 		private String location;
+
+		private MerchantStatus merchantStatus;
 	}
 }

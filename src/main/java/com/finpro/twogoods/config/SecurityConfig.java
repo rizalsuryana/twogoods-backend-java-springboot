@@ -2,8 +2,6 @@ package com.finpro.twogoods.config;
 
 import com.finpro.twogoods.security.JwtAuthenticationFilter;
 import com.finpro.twogoods.security.JwtAuthenticationHandler;
-import com.finpro.twogoods.security.OAuth2SuccessHandler;
-import com.finpro.twogoods.service.OAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,11 +27,6 @@ public class SecurityConfig {
 
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 	private final JwtAuthenticationHandler jwtAuthenticationHandler;
-
-	private final OAuth2UserService oAuth2UserService;
-	private final OAuth2SuccessHandler successHandler;
-
-
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http
@@ -49,9 +42,7 @@ public class SecurityConfig {
 											   .requestMatchers(
 													   "/swagger-ui/**",
 													   "/v3/api-docs/**",
-													   "/api/v1/auth/**",
-													   "/oauth2/**",
-													   "/login/**"
+													   "/api/v1/auth/**"
 															   ).permitAll()
 
 											   // Products
@@ -79,14 +70,6 @@ public class SecurityConfig {
 										   .authenticationEntryPoint(jwtAuthenticationHandler.authenticationEntryPoint())
 										   .accessDeniedHandler(jwtAuthenticationHandler.accessDeniedHandler())
 								  )
-				.oauth2Login(oauth -> oauth
-									 .userInfoEndpoint(user -> user.userService(oAuth2UserService))
-									 .successHandler(successHandler)
-									 .failureHandler((request, response, exception) -> {
-										 response.sendRedirect("http://localhost:5173/oauth/callback?error=" + exception.getMessage());
-									 })
-							)
-
 				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
 		return http.build();
