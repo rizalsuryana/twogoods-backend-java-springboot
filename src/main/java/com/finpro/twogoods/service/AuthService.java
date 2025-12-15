@@ -5,16 +5,21 @@ import com.finpro.twogoods.dto.request.LoginRequest;
 import com.finpro.twogoods.dto.request.MerchantRegisterRequest;
 import com.finpro.twogoods.dto.response.LoginResponse;
 import com.finpro.twogoods.dto.response.RegisterResponse;
+import com.finpro.twogoods.entity.CustomerProfile;
 import com.finpro.twogoods.entity.User;
 import com.finpro.twogoods.enums.UserRole;
+import com.finpro.twogoods.repository.UserRepository;
 import com.finpro.twogoods.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -89,4 +94,5 @@ public class AuthService {
 				.email(user.getEmail())
 				.build();
 	}
+
 }

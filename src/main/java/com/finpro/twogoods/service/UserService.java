@@ -3,7 +3,6 @@ package com.finpro.twogoods.service;
 import com.finpro.twogoods.dto.request.CustomerRegisterRequest;
 import com.finpro.twogoods.dto.request.MerchantRegisterRequest;
 import com.finpro.twogoods.dto.request.UserRequest;
-import com.finpro.twogoods.dto.response.MerchantProfileResponse;
 import com.finpro.twogoods.dto.response.UserResponse;
 import com.finpro.twogoods.entity.CustomerProfile;
 import com.finpro.twogoods.entity.MerchantProfile;
@@ -11,24 +10,28 @@ import com.finpro.twogoods.entity.User;
 import com.finpro.twogoods.enums.UserRole;
 import com.finpro.twogoods.exceptions.ResourceDuplicateException;
 import com.finpro.twogoods.exceptions.ResourceNotFoundException;
-import com.finpro.twogoods.utils.helper.FilterHelper;
-import com.finpro.twogoods.utils.mapper.UserMapper;
 import com.finpro.twogoods.repository.CustomerProfileRepository;
 import com.finpro.twogoods.repository.MerchantProfileRepository;
 import com.finpro.twogoods.repository.UserRepository;
+import com.finpro.twogoods.utils.FileValidator;
+import com.finpro.twogoods.utils.helper.FilterHelper;
+import com.finpro.twogoods.utils.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.*;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import com.finpro.twogoods.utils.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -45,7 +48,7 @@ public class UserService implements UserDetailsService {
 	@Override
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 		return userRepository.findByEmail(email)
-				.orElseThrow(() -> new UsernameNotFoundException("Email or password is incorrect"));
+							 .orElseThrow(() -> new UsernameNotFoundException("Email or password is incorrect"));
 	}
 
 	@Transactional(rollbackFor = Exception.class)
@@ -55,25 +58,58 @@ public class UserService implements UserDetailsService {
 				request.getPassword(),
 				request.getConfirmPassword(),
 				request.getEmail()
-		);
+												);
 
 		User user = User.builder()
-				.username(username)
-				.email(request.getEmail())
-				.password(passwordEncoder.encode(request.getPassword()))
-				.fullName(request.getFullName())
-				.role(UserRole.CUSTOMER)
-				.enabled(true)
-				.build();
+						.username(username)
+						.email(request.getEmail())
+						.password(passwordEncoder.encode(request.getPassword()))
+						.fullName(request.getFullName())
+						.role(UserRole.CUSTOMER)
+						.enabled(true)
+						.build();
 
 		userRepository.save(user);
 
 		customerProfileRepository.save(
 				CustomerProfile.builder().user(user).build()
-		);
+									  );
 
 		return user;
 	}
+
+
+	@Transactional(rollbackFor = Exception.class)
+	public User createCustomerForOAuth(OAuth2User oAuth2User) {
+		String email = oAuth2User.getAttribute("email");
+		String fullName = oAuth2User.getAttribute("name");
+
+		String username = generateUsername(email);
+
+		// buat password dummy karena OAuth tidak pakai password
+		String dummyPassword = UUID.randomUUID().toString();
+
+		User user = User.builder()
+						.username(username)
+						.email(email)
+						.password(passwordEncoder.encode(dummyPassword))
+						.fullName(fullName)
+						.role(UserRole.CUSTOMER)
+						.enabled(true)
+						.build();
+
+		userRepository.save(user);
+
+		customerProfileRepository.save(
+				CustomerProfile.builder()
+							   .user(user)
+							   .location(null)
+							   .build()
+									  );
+
+		return user;
+	}
+
 
 	@Transactional(rollbackFor = Exception.class)
 	public User createMerchant(MerchantRegisterRequest request) {
@@ -82,26 +118,26 @@ public class UserService implements UserDetailsService {
 				request.getPassword(),
 				request.getConfirmPassword(),
 				request.getEmail()
-		);
+												);
 
 		User user = User.builder()
-				.username(username)
-				.email(request.getEmail())
-				.password(passwordEncoder.encode(request.getPassword()))
-				.fullName(request.getFullName())
-				.role(UserRole.MERCHANT)
-				.enabled(true)
-				.build();
+						.username(username)
+						.email(request.getEmail())
+						.password(passwordEncoder.encode(request.getPassword()))
+						.fullName(request.getFullName())
+						.role(UserRole.MERCHANT)
+						.enabled(true)
+						.build();
 
 		userRepository.save(user);
 
 		merchantProfileRepository.save(
 				MerchantProfile.builder()
-						.user(user)
-						.location(null)
-						.NIK(null)
-						.build()
-		);
+							   .user(user)
+							   .location(null)
+							   .NIK(null)
+							   .build()
+									  );
 
 		return user;
 	}
@@ -151,7 +187,6 @@ public class UserService implements UserDetailsService {
 	}
 
 
-
 	public Page<UserResponse> getAllUsers(int page, int size, String role, String search) {
 
 		Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
@@ -163,8 +198,8 @@ public class UserService implements UserDetailsService {
 		filtered = FilterHelper.searchUsers(filtered, search);
 
 		List<UserResponse> responses = filtered.stream()
-				.map(User::toResponse)
-				.toList();
+											   .map(User::toResponse)
+											   .toList();
 
 		return new PageImpl<>(responses, pageable, usersPage.getTotalElements());
 	}
@@ -174,7 +209,7 @@ public class UserService implements UserDetailsService {
 		User principal = (User) auth.getPrincipal();
 
 		User user = userRepository.findById(principal.getId())
-				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
+								  .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
 		return UserMapper.toFull(user);
 	}
@@ -189,19 +224,25 @@ public class UserService implements UserDetailsService {
 			throw new ResourceDuplicateException("Email already exists");
 		}
 
-		String username = email.split("@")[0];
+		return generateUsername(email);
+	}
+
+	private String generateUsername(String email) {
+		String base = email.split("@")[0];
+		String username = base;
 		int counter = 1;
-		String original = username;
 
 		while (userRepository.existsByUsername(username)) {
-			username = original + counter++;
+			username = base + counter;
+			counter++;
 		}
 
 		return username;
 	}
 
+
 	public User getUserById(Long id) {
 		return userRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
+							 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 	}
 }
