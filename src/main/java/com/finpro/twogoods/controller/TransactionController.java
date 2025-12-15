@@ -26,39 +26,41 @@ public class TransactionController {
 
 	private final TransactionService transactionService;
 
-// Buy Now
+	/* ================= BUY NOW ================= */
+
 	@PostMapping("/buy-now/{productId}")
 	public ResponseEntity<ApiResponse<TransactionResponse>> buyNow(
 			@PathVariable Long productId
-	) {
+																  ) {
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.CREATED,
 				"Buy now successful",
 				transactionService.buyNow(productId)
-		);
+											   );
 	}
 
+	/* ================= DETAIL ================= */
 
-	// GET DETAIL TRANSACTION
 	@Operation(
 			summary = "Get transaction detail",
 			description = """
-                    Get full detail of a transaction.
-                    Only the customer or the merchant involved can view this.
-                    """
+				Get full detail of a transaction.
+				Only the customer or the merchant involved can view this.
+				"""
 	)
 	@GetMapping("/{id}")
 	public ResponseEntity<ApiResponse<TransactionResponse>> getDetail(
 			@PathVariable Long id
-	) {
+																	 ) {
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.OK,
 				"Transaction detail fetched successfully",
 				transactionService.getTransactionDetail(id)
-		);
+											   );
 	}
 
-	// GET CUSTOMER TRANSACTIONS
+	/* ================= CUSTOMER ================= */
+
 	@Operation(
 			summary = "Get my transactions",
 			description = "Get all transactions created by the logged-in customer."
@@ -69,10 +71,11 @@ public class TransactionController {
 				HttpStatus.OK,
 				"My transactions fetched successfully",
 				transactionService.getMyTransactions()
-		);
+											   );
 	}
 
-	// GET MERCHANT ORDERS
+	/* ================= MERCHANT ================= */
+
 	@Operation(
 			summary = "Get merchant orders",
 			description = "Get all orders received by the logged-in merchant."
@@ -83,37 +86,36 @@ public class TransactionController {
 				HttpStatus.OK,
 				"Merchant orders fetched successfully",
 				transactionService.getMerchantOrders()
-		);
+											   );
 	}
 
-	// UPDATE STATUS (Shopee Flow)
+	/* ================= UPDATE STATUS ================= */
+
 	@Operation(
 			summary = "Update transaction status",
 			description = """
-                    Update transaction status following Shopee-like flow:
-                    
-                    CUSTOMER:
-                    - COMPLETED (only after SHIPPED)
-                    - CANCELED (only before SHIPPED)
-                    
-                    MERCHANT:
-                    - PAID (only from PENDING)
-                    - SHIPPED (only from PAID)
-                    """
+				Update transaction status with Shopee-like flow.
+
+				CUSTOMER:
+				- COMPLETED (only after SHIPPED)
+				- CANCELED (only before SHIPPED)
+
+				MERCHANT:
+				- SHIPPED (only after PAID)
+
+				NOTE:
+				- PAID status is controlled by Midtrans webhook
+				"""
 	)
 	@PutMapping("/{id}/status")
 	public ResponseEntity<ApiResponse<TransactionResponse>> updateStatus(
 			@PathVariable Long id,
-			@Parameter(
-					description = "New status: PENDING, PAID, SHIPPED, COMPLETED, CANCELED",
-					example = "PAID"
-			)
 			@RequestParam OrderStatus status
-	) {
+																		) {
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.OK,
 				"Transaction status updated successfully",
 				transactionService.updateStatus(id, status)
-		);
+											   );
 	}
 }

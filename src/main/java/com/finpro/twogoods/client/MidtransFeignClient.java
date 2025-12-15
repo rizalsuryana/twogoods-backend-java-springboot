@@ -9,7 +9,6 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-
 @FeignClient(
 		name = "midtransClient",
 		url = "https://app.sandbox.midtrans.com",
@@ -17,30 +16,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 )
 public interface MidtransFeignClient {
 
-	@PostMapping(
-			value = "/snap/v1/transactions",
-			consumes = "application/json",
-			produces = "application/json"
-	)
+	@PostMapping("/snap/v1/transactions")
 	MidtransSnapResponse createTransaction(@RequestBody MidtransSnapRequest body);
 
-	@PostMapping(
-			value = "/v2/{orderId}/refund",
-			consumes = "application/json",
-			produces = "application/json"
-	)
+	@PostMapping("/v2/{orderId}/refund")
 	MidtransRefundResponse refund(
-			@PathVariable("orderId") String orderId,
+			@PathVariable String orderId,
 			@RequestBody MidtransRefundRequest body
 								 );
 
-	@PostMapping(
-			value = "/v2/{orderId}/direct_refund",
-			consumes = "application/json",
-			produces = "application/json"
-	)
+	@PostMapping("/v2/{orderId}/direct_refund")
 	MidtransRefundResponse directRefund(
-			@PathVariable("orderId") String orderId,
+			@PathVariable String orderId,
 			@RequestBody MidtransRefundRequest body
 									   );
 }

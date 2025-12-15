@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Configuration;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-
 @Configuration
 public class MidtransFeignConfig {
 
@@ -17,7 +16,7 @@ public class MidtransFeignConfig {
 	@Bean
 	public RequestInterceptor midtransInterceptor() {
 		return template -> {
-			String auth = apiKey + ":";   // <-- IMPORTANT!
+			String auth = apiKey + ":";
 			String base64Auth = Base64.getEncoder()
 									  .encodeToString(auth.getBytes(StandardCharsets.UTF_8));
 

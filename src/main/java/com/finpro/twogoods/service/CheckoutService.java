@@ -21,97 +21,74 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CheckoutService {
 
 	private final CartItemRepository cartItemRepository;
 	private final TransactionRepository transactionRepository;
-	private final ProductRepository productRepository;
 	private final MidtransService midtransService;
 
-	@Transactional(rollbackFor = Exception.class)
+	@Transactional
 	public CheckoutResponse checkout(List<Long> cartItemIds) {
+
 		User user = getCurrentUser();
+		List<CartItem> items = cartItemRepository.findByIdIn(cartItemIds);
 
-		if (cartItemIds == null || cartItemIds.isEmpty()) {
-			throw new ApiException("No cart items selected");
-		}
-
-		// Ambil cart item berdasarkan ID yang dikirim FE
-		List<CartItem> items = cartItemRepository.findByIdIn(cartItemIds)
-				.stream()
-				.filter(i -> i.getUser().getId().equals(user.getId()))
-				.toList();
-
-		if (items.isEmpty()) {
-			throw new ApiException("No valid cart items found for this user");
-		}
-
-		List<TransactionResponse> responses = new ArrayList<>();
+		String orderId = "ORDER-" + user.getId() + "-" + UUID.randomUUID();
 		int total = 0;
 
+		List<TransactionResponse> responses = new ArrayList<>();
+
 		for (CartItem cart : items) {
+
 			Product product = cart.getProduct();
 
-			// Block product yang sudah tidak available
 			if (!product.getIsAvailable()) {
-				throw new ApiException("Product " + product.getName() + " is sold out");
+				throw new ApiException("Product sold out");
 			}
 
 			Transaction trx = Transaction.builder()
-					.customer(user)
-					.merchant(cart.getMerchant())
-					.status(OrderStatus.PENDING)
-					.totalPrice(product.getPrice())
-					.build();
+										 .orderId(orderId)
+										 .customer(user)
+										 .merchant(cart.getMerchant())
+										 .status(OrderStatus.PENDING)
+										 .totalPrice(product.getPrice())
+										 .build();
 
-			TransactionItem item = TransactionItem.builder()
-					.transaction(trx)
-					.product(product)
-					.price(product.getPrice())
-					.quantity(1)
-					.build();
+			trx.getItems().add(
+					TransactionItem.builder()
+								   .transaction(trx)
+								   .product(product)
+								   .price(product.getPrice())
+								   .quantity(1)
+								   .build()
+							  );
 
-			// pastikan list items tidak null
-			trx.getItems().add(item);
+			transactionRepository.save(trx);
+			total += product.getPrice().intValue();
 
-			Transaction savedTransaction = transactionRepository.save(trx);
-
-			total += item.getPrice().intValue();
-
-			// Mark product sebagai sold out (kalau memang 1 quantity)
-			product.setIsAvailable(false);
-			productRepository.save(product);
-
-			responses.add(savedTransaction.toResponse());
+			responses.add(trx.toResponse());
 		}
 
-		// Hapus hanya cart item yang di-checkout
-		cartItemRepository.deleteAll(items);
-
-		// Generate unique orderId buat Midtrans
-		String orderId = "ORDER-" + user.getId() + "-" + UUID.randomUUID();
-
-		MidtransSnapRequest request = MidtransSnapRequest.builder()
-				.transactionDetails(
-						MidtransSnapRequest.TransactionDetails.builder()
-								.orderId(orderId)
-								.grossAmount(total)
-								.build()
-				)
-				.callbacks(new MidtransSnapRequest.Callbacks("https://www.2goods.com"))
-				.build();
-
-		MidtransSnapResponse midtransResponse = midtransService.createSnap(request);
+		MidtransSnapResponse snap = midtransService.createSnap(
+				MidtransSnapRequest.builder()
+								   .transactionDetails(
+										   MidtransSnapRequest.TransactionDetails.builder()
+																				 .orderId(orderId)
+																				 .grossAmount(total)
+																				 .build()
+													  )
+								   .build()
+															  );
 
 		return CheckoutResponse.builder()
-				.midtransSnap(midtransResponse)
-				.transactions(responses)
-				.build();
+							   .midtransSnap(snap)
+							   .transactions(responses)
+							   .build();
 	}
 
 	private User getCurrentUser() {
 		return (User) SecurityContextHolder.getContext()
-				.getAuthentication()
-				.getPrincipal();
+										   .getAuthentication().getPrincipal();
 	}
 }

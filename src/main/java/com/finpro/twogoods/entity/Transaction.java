@@ -14,10 +14,7 @@ import java.util.List;
 @Table(
 		name = "transactions",
 		indexes = {
-				@Index(
-						name = "idx_transaction_order_id",
-						columnList = "orderId"
-				)
+				@Index(name = "idx_transaction_order_id", columnList = "orderId")
 		}
 )
 @NoArgsConstructor
@@ -27,49 +24,53 @@ import java.util.List;
 @Builder
 public class Transaction extends BaseEntity {
 
+	@Column(nullable = false, updatable = false)
+	private String orderId;
+
 	@ManyToOne
-	@JoinColumn(name = "customer_id")
+	@JoinColumn(name = "customer_id", nullable = false)
 	private User customer;
 
 	@ManyToOne
-	@JoinColumn(name = "merchant_id")
+	@JoinColumn(name = "merchant_id", nullable = false)
 	private MerchantProfile merchant;
 
 	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
 	private OrderStatus status;
 
+	@Column(nullable = false)
 	private BigDecimal totalPrice;
-
-	@Column(nullable = false, unique = true, updatable = false)
-	private String orderId;
-
 
 	@OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL)
 	@Builder.Default
 	private List<TransactionItem> items = new ArrayList<>();
 
-
 	public TransactionResponse toResponse() {
-		return TransactionResponse.builder()
-								  .id(getId())
-								  .customerId(customer != null ? customer.getId() : null)
-								  .merchantId(merchant != null ? merchant.getId() : null)
-								  .status(status)
-								  .totalPrice(totalPrice)
-								  .createdAt(getCreatedAt())
-								  .updatedAt(getUpdatedAt())
-								  .orderId(getOrderId())
-								  .items(
-										  items.stream()
-											   .map(item -> TransactionItemResponse.builder()
-																				   .productId(item.getProduct().getId())
-																				   .productName(item.getProduct()
-																									.getName())
-																				   .price(item.getPrice())
-																				   .quantity(item.getQuantity())
-																				   .build()
-												   ).toList()
-										)
-								  .build();
+		return TransactionResponse
+				.builder()
+				.id(getId())
+				.orderId(orderId)
+				.customerId(customer.getId())
+				.merchantId(merchant.getId())
+				.status(status)
+				.totalPrice(totalPrice)
+				.createdAt(getCreatedAt())
+				.updatedAt(getUpdatedAt())
+				.items(
+						items.stream()
+							 .map(item ->
+										  TransactionItemResponse
+												  .builder()
+												  .productId(item.getProduct()
+																 .getId())
+												  .productName(item.getProduct()
+																   .getName())
+												  .price(item.getPrice())
+												  .quantity(item.getQuantity())
+												  .build()
+								 ).toList()
+					  )
+				.build();
 	}
 }
