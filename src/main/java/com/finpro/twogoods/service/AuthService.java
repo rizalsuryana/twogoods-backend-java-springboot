@@ -21,72 +21,76 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AuthService {
 
-	private final JwtTokenProvider jwtTokenProvider;
-	private final AuthenticationManager authenticationManager;
-	private final UserService userService;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final AuthenticationManager authenticationManager;
+    private final UserService userService;
 
-	@Transactional(readOnly = true)
-	public LoginResponse login(LoginRequest request) {
+    @Transactional(readOnly = true)
+    public LoginResponse login(LoginRequest request) {
 
-		Authentication authentication = authenticationManager.authenticate(
-				new UsernamePasswordAuthenticationToken(
-						request.getEmail(),
-						request.getPassword()
-				)
-		);
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getEmail(),
+                        request.getPassword()
+                )
+        );
 
-		User user = (User) authentication.getPrincipal();
-		String token = jwtTokenProvider.generateToken(user);
+        User user = (User) authentication.getPrincipal();
+        String token = jwtTokenProvider.generateToken(user);
 
-		String location = null;
-		if (user.getRole() == UserRole.CUSTOMER && user.getCustomerProfile() != null) {
-			location = user.getCustomerProfile().getLocation();
-		}
-		if (user.getRole() == UserRole.MERCHANT && user.getMerchantProfile() != null) {
-			location = user.getMerchantProfile().getLocation();
-		}
+        String location = null;
+        if (user.getRole() == UserRole.CUSTOMER && user.getCustomerProfile() != null) {
+            location = user.getCustomerProfile().getLocation();
+        }
+        if (user.getRole() == UserRole.MERCHANT && user.getMerchantProfile() != null) {
+            location = user.getMerchantProfile().getLocation();
+        }
 
-		LoginResponse.UserInfo userInfo = LoginResponse.UserInfo.builder()
-				.userId(user.getId())
-				.role(user.getRole().getRoleName())
-				.email(user.getEmail())
-				.name(user.getFullName())
-				.profilePicture(user.getProfilePicture())
-				.location(location)
-				.build();
+        LoginResponse.UserInfo userInfo = LoginResponse.UserInfo.builder()
+                .userId(user.getId())
+                .role(user.getRole().getRoleName())
+                .email(user.getEmail())
+                .name(user.getFullName())
+                .profilePicture(user.getProfilePicture())
+                .location(location)
+                .merchantStatus(user.getMerchantProfile() != null
+                        ? user.getMerchantProfile().getIsVerified()
+                        : null
+                )
+                .build();
 
-		return LoginResponse.builder()
-				.accessToken(token)
-				.tokenType("Bearer")
-				.user(userInfo)
-				.build();
-	}
+        return LoginResponse.builder()
+                .accessToken(token)
+                .tokenType("Bearer")
+                .user(userInfo)
+                .build();
+    }
 
-	@Transactional(rollbackFor = Exception.class)
-	public RegisterResponse registerCustomer(CustomerRegisterRequest request) {
-		log.info("Attempting to register CUSTOMER with email: {}", request.getEmail());
+    @Transactional(rollbackFor = Exception.class)
+    public RegisterResponse registerCustomer(CustomerRegisterRequest request) {
+        log.info("Attempting to register CUSTOMER with email: {}", request.getEmail());
 
-		User user = userService.createCustomer(request);
+        User user = userService.createCustomer(request);
 
-		log.info("Customer registered successfully with username: {}", user.getUsername());
+        log.info("Customer registered successfully with username: {}", user.getUsername());
 
-		return RegisterResponse.builder()
-				.fullName(user.getFullName())
-				.email(user.getEmail())
-				.build();
-	}
+        return RegisterResponse.builder()
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .build();
+    }
 
-	@Transactional(rollbackFor = Exception.class)
-	public RegisterResponse registerMerchant(MerchantRegisterRequest request) {
-		log.info("Attempting to register MERCHANT with email: {}", request.getEmail());
+    @Transactional(rollbackFor = Exception.class)
+    public RegisterResponse registerMerchant(MerchantRegisterRequest request) {
+        log.info("Attempting to register MERCHANT with email: {}", request.getEmail());
 
-		User user = userService.createMerchant(request);
+        User user = userService.createMerchant(request);
 
-		log.info("Merchant registered successfully with username: {}", user.getUsername());
+        log.info("Merchant registered successfully with username: {}", user.getUsername());
 
-		return RegisterResponse.builder()
-				.fullName(user.getFullName())
-				.email(user.getEmail())
-				.build();
-	}
+        return RegisterResponse.builder()
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .build();
+    }
 }
