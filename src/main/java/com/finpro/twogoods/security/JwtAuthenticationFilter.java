@@ -25,13 +25,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	private final JwtTokenProvider jwtTokenProvider;
 	private final UserService userService;
-
 	@Override
 	protected void doFilterInternal(
 			@NonNull HttpServletRequest request,
 			@NonNull HttpServletResponse response,
 			@NonNull FilterChain filterChain
 								   ) throws ServletException, IOException {
+
+		String path = request.getRequestURI();
+
+		if (
+				path.startsWith("/swagger-ui") ||
+				path.startsWith("/v3/api-docs") ||
+				path.startsWith("/oauth2") ||
+				path.startsWith("/login") ||
+				path.startsWith("/api/v1/auth")
+		) {
+			filterChain.doFilter(request, response);
+			return;
+		}
+
+		// ===== JWT LOGIC =====
 		try {
 			String header = request.getHeader("Authorization");
 			if (header == null || !header.startsWith("Bearer ")) {
@@ -45,7 +59,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 				String email = jwtTokenProvider.extractEmail(tokenJwt);
 				log.debug("JWT subject (email) = {}", email);
 
-				if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+				if (email != null &&
+					SecurityContextHolder.getContext().getAuthentication() == null) {
+
 					User user = (User) userService.loadUserByUsername(email);
 
 					UsernamePasswordAuthenticationToken authentication =
@@ -55,19 +71,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 									user.getAuthorities()
 							);
 
-					authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-					SecurityContextHolder.getContext().setAuthentication(authentication);
+					authentication.setDetails(
+							new WebAuthenticationDetailsSource().buildDetails(request)
+											 );
+
+					SecurityContextHolder.getContext()
+										 .setAuthentication(authentication);
 				}
 			}
 
 			filterChain.doFilter(request, response);
+
 		} catch (JwtAuthenticationException e) {
 			log.error("JWT Authentication failed: {}", e.getMessage());
 			request.setAttribute("jwtException", e);
 			filterChain.doFilter(request, response);
-		} catch (Exception e) {
-			log.error("Cannot set user authentication: {}", e.getMessage());
-			filterChain.doFilter(request, response);
 		}
 	}
+
 }

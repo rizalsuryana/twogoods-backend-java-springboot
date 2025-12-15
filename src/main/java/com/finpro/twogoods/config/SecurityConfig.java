@@ -80,11 +80,13 @@ public class SecurityConfig {
 										   .accessDeniedHandler(jwtAuthenticationHandler.accessDeniedHandler())
 								  )
 				.oauth2Login(oauth -> oauth
-									 .userInfoEndpoint(user -> user
-															   .userService(oAuth2UserService)
-													  )
+									 .userInfoEndpoint(user -> user.userService(oAuth2UserService))
 									 .successHandler(successHandler)
+									 .failureHandler((request, response, exception) -> {
+										 response.sendRedirect("http://localhost:5173/oauth/callback?error=" + exception.getMessage());
+									 })
 							)
+
 				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
 		return http.build();

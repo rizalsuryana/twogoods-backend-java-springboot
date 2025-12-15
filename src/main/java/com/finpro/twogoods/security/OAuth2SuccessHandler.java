@@ -1,8 +1,8 @@
 package com.finpro.twogoods.security;
 
 import com.finpro.twogoods.entity.User;
-import com.finpro.twogoods.exceptions.ResourceNotFoundException;
 import com.finpro.twogoods.repository.UserRepository;
+import com.finpro.twogoods.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -15,29 +15,27 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
-public class OAuth2SuccessHandler
-		extends SimpleUrlAuthenticationSuccessHandler {
+public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-	private final JwtTokenProvider jwtService;
+	private final JwtTokenProvider jwtTokenProvider;
+	private final UserService userService;
 	private final UserRepository userRepository;
 
 	@Override
-	public void onAuthenticationSuccess(
-			HttpServletRequest request,
-			HttpServletResponse response,
-			Authentication authentication
-									   ) throws IOException {
-
+	public void onAuthenticationSuccess(HttpServletRequest request,
+										HttpServletResponse response,
+										Authentication authentication) throws IOException {
 		OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-		String email = oAuth2User.getAttribute("email");
 
-		User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+		// ambil user dari DB atau register baru
+		User user = userRepository.findByEmail(oAuth2User.getAttribute("email"))
+								  .orElseGet(() -> userService.createCustomerForOAuth(oAuth2User));
 
-		String token = jwtService.generateToken(user);
+		// generate token
+		String token = jwtTokenProvider.generateToken(user);
 
-		response.sendRedirect(
-				"http://localhost:5173/oauth/callback?token=" + token
-							 );
+		// redirect ke frontend
+		response.sendRedirect("http://localhost:5173/oauth/callback?token=" + token);
 	}
-}
 
+}

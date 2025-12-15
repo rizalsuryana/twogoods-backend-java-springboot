@@ -53,7 +53,4 @@ public class AuthController {
 				authService.registerMerchant(request)
 		);
 	}
-
-
-
 }
