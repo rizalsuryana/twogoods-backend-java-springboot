@@ -161,9 +161,8 @@ public class TransactionService {
 		switch (newStatus) {
 
 			case PAID:
-				if (!isMerchant) throw new ApiException("Only merchant can set PAID");
-				if (currentStatus != OrderStatus.PENDING) {throw new ApiException("PAID can only be set from PENDING");}
-				break;
+				throw new ApiException("PAID status is controlled by payment gateway");
+
 
 			case SHIPPED:
 				if (!isMerchant) throw new ApiException("Only merchant can set SHIPPED");
