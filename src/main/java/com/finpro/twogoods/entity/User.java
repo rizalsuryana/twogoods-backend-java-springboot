@@ -40,6 +40,9 @@ public class User extends BaseEntity implements UserDetails {
 	@Enumerated(EnumType.STRING)
 	private UserRole role;
 
+	private String provider;
+	private String providerId;
+
 	@Column(nullable = false)
 	private boolean enabled = true;
 
