@@ -16,8 +16,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +29,7 @@ public class TransactionService {
 	private final MerchantProfileRepository merchantProfileRepository;
 	private final MidtransService midtransService;
 
-
+	// Buy now
 	@Transactional(rollbackFor = Exception.class)
 	public TransactionResponse buyNow(Long productId) {
 		User user = getCurrentUser();
@@ -39,7 +39,7 @@ public class TransactionService {
 		}
 
 		Product product = productRepository.findById(productId)
-										   .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+				.orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
 		if (!product.getIsAvailable()) {
 			throw new ApiException("Product is sold out");
@@ -50,64 +50,61 @@ public class TransactionService {
 		}
 
 		Transaction trx = Transaction.builder()
-									 .customer(user)
-									 .merchant(product.getMerchant())
-									 .status(OrderStatus.PENDING)
-									 .totalPrice(product.getPrice())
-									 .build();
+				.customer(user)
+				.merchant(product.getMerchant())
+				.status(OrderStatus.PENDING)
+				.totalPrice(product.getPrice())
+				.build();
 
 		TransactionItem item = TransactionItem.builder()
-											  .transaction(trx)
-											  .product(product)
-											  .price(product.getPrice())
-											  .quantity(1)
-											  .build();
+				.transaction(trx)
+				.product(product)
+				.price(product.getPrice())
+				.quantity(1)
+				.build();
 
 		trx.getItems().add(item);
 
-		String orderId = "ORDER-" + user.getId() + "-" + UUID.randomUUID();
-		trx.setOrderId(orderId);
-
 		Transaction saved = transactionRepository.save(trx);
 
-		MidtransSnapRequest snapRequest =
-				MidtransSnapRequest.builder()
-								   .transactionDetails(
-										   MidtransSnapRequest.TransactionDetails.builder()
-																				 .orderId(orderId)
-																				 .grossAmount(product.getPrice()
-																									 .intValue())
-																				 .build()
-													  )
-								   .callbacks(new MidtransSnapRequest.Callbacks(
-										   "https://www.2goods.com"
-								   ))
-								   .build();
+		product.setIsAvailable(false);
+		productRepository.save(product);
 
-		MidtransSnapResponse snapResponse =
-				midtransService.createSnap(snapRequest);
+		TransactionResponse res = saved.toResponse();
 
+		//Snap Request
+		MidtransSnapRequest.TransactionDetails details =
+				MidtransSnapRequest
+						.TransactionDetails.builder()
+										   .grossAmount(product.getPrice().intValue())
+										   .orderId("ORDER-" + (transactionRepository.count() == 0 ? 1 :
+																transactionRepository.count() + 1))
+										   .build();
 
-		TransactionResponse response = saved.toResponse();
-		response.setMidtransSnapResponse(snapResponse);
+		MidtransSnapRequest req = MidtransSnapRequest.builder()
+													 .transactionDetails(details)
+													 .callbacks(new MidtransSnapRequest.Callbacks(
+															 "https://www.2goods.com"))
+													 .build();
+		MidtransSnapResponse midtransResponse = midtransService.createSnap(req);
 
-		return response;
+		res.setMidtransSnapResponse(midtransResponse);
+
+		return res;
 	}
 
 
+	// GET DETAIL TRANSACTION
+	@Transactional(readOnly = true)
 	public TransactionResponse getTransactionDetail(Long id) {
 
 		User currentUser = getCurrentUser();
 
 		Transaction trx = transactionRepository.findById(id)
-											   .orElseThrow(() -> new ResourceNotFoundException(
-													   "Transaction not found"));
+											   .orElseThrow(() -> new ApiException("Transaction not found"));
 
-		boolean isCustomer =
-				trx.getCustomer().getId().equals(currentUser.getId());
-
-		boolean isMerchant =
-				trx.getMerchant().getUser().getId().equals(currentUser.getId());
+		boolean isCustomer = trx.getCustomer().getId().equals(currentUser.getId());
+		boolean isMerchant = trx.getMerchant().getUser().getId().equals(currentUser.getId());
 
 		if (!isCustomer && !isMerchant) {
 			throw new ApiException("You are not allowed to view this transaction");
@@ -116,8 +113,9 @@ public class TransactionService {
 		return trx.toResponse();
 	}
 
+	// GET CUSTOMER TRANSACTIONS
+	@Transactional(readOnly = true)
 	public List<TransactionResponse> getMyTransactions() {
-
 		User customer = getCurrentUser();
 
 		return transactionRepository.findByCustomer(customer)
@@ -126,15 +124,14 @@ public class TransactionService {
 									.toList();
 	}
 
-
+	// GET MERCHANT ORDERS
+	@Transactional(readOnly = true)
 	public List<TransactionResponse> getMerchantOrders() {
 		User merchantUser = getCurrentUser();
 
-		MerchantProfile merchant =
-				merchantProfileRepository.findByUser(merchantUser)
-										 .orElseThrow(() -> new ResourceNotFoundException(
-												 "Merchant profile not found"
-										 ));
+		MerchantProfile merchant = merchantProfileRepository.findByUser(merchantUser)
+															.orElseThrow(() -> new ApiException(
+																	"Merchant profile not found"));
 
 		return transactionRepository.findByMerchant(merchant)
 									.stream()
@@ -143,6 +140,7 @@ public class TransactionService {
 	}
 
 
+	// UPDATE STATUS
 	@Transactional(rollbackFor = Exception.class)
 	public TransactionResponse updateStatus(Long id, OrderStatus newStatus) {
 
@@ -151,11 +149,8 @@ public class TransactionService {
 		Transaction trx = transactionRepository.findById(id)
 											   .orElseThrow(() -> new ApiException("Transaction not found"));
 
-		boolean isCustomer =
-				trx.getCustomer().getId().equals(currentUser.getId());
-
-		boolean isMerchant =
-				trx.getMerchant().getUser().getId().equals(currentUser.getId());
+		boolean isCustomer = trx.getCustomer().getId().equals(currentUser.getId());
+		boolean isMerchant = trx.getMerchant().getUser().getId().equals(currentUser.getId());
 
 		if (!isCustomer && !isMerchant) {
 			throw new ApiException("You are not allowed to update this transaction");
@@ -165,35 +160,32 @@ public class TransactionService {
 
 		switch (newStatus) {
 
-			case PAID -> throw new ApiException(
-					"PAID status is managed by Midtrans"
-			);
+			case PAID:
+				if (!isMerchant) throw new ApiException("Only merchant can set PAID");
+				if (currentStatus != OrderStatus.PENDING) {throw new ApiException("PAID can only be set from PENDING");}
+				break;
 
-			case SHIPPED -> {
-				if (!isMerchant) {throw new ApiException("Only merchant can set SHIPPED");}
-				if (currentStatus != OrderStatus.PAID) {throw new ApiException("SHIPPED only allowed after PAID");}
-			}
+			case SHIPPED:
+				if (!isMerchant) throw new ApiException("Only merchant can set SHIPPED");
+				if (currentStatus != OrderStatus.PAID) {throw new ApiException("SHIPPED can only be set from PAID");}
+				break;
 
-			case COMPLETED -> {
-				if (!isCustomer) {throw new ApiException("Only customer can complete order");}
+			case COMPLETED:
+				if (!isCustomer) throw new ApiException("Only customer can set COMPLETED");
 				if (currentStatus != OrderStatus.SHIPPED) {
-					throw new ApiException(
-							"COMPLETED only allowed after SHIPPED"
-					);
+					throw new ApiException("COMPLETED can only be set from SHIPPED");
 				}
-			}
+				break;
 
-			case CANCELED -> {
-				if (!isCustomer) {throw new ApiException("Only customer can cancel order");}
-				if (currentStatus == OrderStatus.SHIPPED ||
-					currentStatus == OrderStatus.COMPLETED) {
-					throw new ApiException(
-							"Cannot cancel after shipment"
-					);
+			case CANCELED:
+				if (!isCustomer) throw new ApiException("Only customer can cancel");
+				if (currentStatus == OrderStatus.SHIPPED || currentStatus == OrderStatus.COMPLETED) {
+					throw new ApiException("Cannot cancel after item is shipped");
 				}
-			}
+				break;
 
-			default -> throw new ApiException("Invalid status update");
+			default:
+				throw new ApiException("Invalid status update");
 		}
 
 		trx.setStatus(newStatus);

@@ -56,6 +56,7 @@ public class SecurityConfig {
 				)
 				.authorizeHttpRequests(auth -> auth
 
+						// Public
 						.requestMatchers(
 								"/swagger-ui/**",
 								"/v3/api-docs/**",
@@ -66,17 +67,51 @@ public class SecurityConfig {
 
 						.requestMatchers(HttpMethod.GET, "/api/v1/products/**").permitAll()
 
-						.requestMatchers("/api/v1/customers/**").hasAnyRole("CUSTOMER", "ADMIN")
-						.requestMatchers(HttpMethod.POST, "/api/v1/transactions/**").hasRole("CUSTOMER")
-						.requestMatchers(HttpMethod.GET, "/api/v1/transactions/me").hasRole("CUSTOMER")
+						// CUSTOMER
+						.requestMatchers("/api/v1/customers/**")
+						.hasAnyRole("CUSTOMER", "ADMIN")
 
-						.requestMatchers("/api/v1/merchant/**").hasAnyRole("MERCHANT", "ADMIN")
-						.requestMatchers(HttpMethod.POST, "/api/v1/products").hasRole("MERCHANT")
-						.requestMatchers(HttpMethod.PUT, "/api/v1/products/**").hasRole("MERCHANT")
-						.requestMatchers(HttpMethod.DELETE, "/api/v1/products/**").hasRole("MERCHANT")
-						.requestMatchers(HttpMethod.GET, "/api/v1/transactions/merchant/**").hasRole("MERCHANT")
+						.requestMatchers(HttpMethod.POST, "/api/v1/transactions/buy-now/**")
+						.hasAnyRole("CUSTOMER", "ADMIN")
 
-						.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+						.requestMatchers(HttpMethod.POST, "/api/v1/transactions/*/request-cancel")
+						.hasAnyRole("CUSTOMER", "ADMIN")
+
+						.requestMatchers(HttpMethod.POST, "/api/v1/transactions/*/request-return")
+						.hasAnyRole("CUSTOMER", "ADMIN")
+
+						.requestMatchers(HttpMethod.GET, "/api/v1/transactions/me")
+						.hasAnyRole("CUSTOMER", "ADMIN")
+
+						// MERCHANT
+						.requestMatchers("/api/v1/merchant/**")
+						.hasAnyRole("MERCHANT", "ADMIN")
+
+						.requestMatchers(HttpMethod.POST, "/api/v1/products")
+						.hasAnyRole("MERCHANT", "ADMIN")
+
+						.requestMatchers(HttpMethod.PUT, "/api/v1/products/**")
+						.hasAnyRole("MERCHANT", "ADMIN")
+
+						.requestMatchers(HttpMethod.DELETE, "/api/v1/products/**")
+						.hasAnyRole("MERCHANT", "ADMIN")
+
+						.requestMatchers(HttpMethod.GET, "/api/v1/transactions/merchant/**")
+						.hasAnyRole("MERCHANT", "ADMIN")
+
+						.requestMatchers(HttpMethod.POST, "/api/v1/transactions/*/confirm-cancel")
+						.hasAnyRole("MERCHANT", "ADMIN")
+
+						.requestMatchers(HttpMethod.POST, "/api/v1/transactions/*/confirm-return")
+						.hasAnyRole("MERCHANT", "ADMIN")
+
+						// BOTH (merchant & customer)
+						.requestMatchers(HttpMethod.PUT, "/api/v1/transactions/*/status")
+						.hasAnyRole("MERCHANT", "CUSTOMER", "ADMIN")
+
+						// ADMIN
+						.requestMatchers("/api/v1/admin/**")
+						.hasRole("ADMIN")
 
 						.anyRequest().authenticated()
 				)

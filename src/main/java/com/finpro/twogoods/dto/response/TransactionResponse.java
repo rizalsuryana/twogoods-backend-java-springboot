@@ -19,10 +19,16 @@ public class TransactionResponse {
 	private Long customerId;
 	private Long merchantId;
 	private OrderStatus status;
+	private Boolean customerCancelRequest;
+	private Boolean merchantCancelConfirm;
+	private Boolean customerReturnRequest;
+	private Boolean merchantReturnConfirm;
+
 	private BigDecimal totalPrice;
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
 	private MidtransSnapResponse midtransSnapResponse;
+	private LocalDateTime returnRequestedAt;
 
 	private List<TransactionItemResponse> items;
 }

@@ -29,10 +29,25 @@ public class CartItem extends BaseEntity {
 	public CartItemResponse toResponse() {
 		return CartItemResponse.builder()
 				.id(getId())
+
+				// Product
 				.productId(product.getId())
 				.productName(product.getName())
 				.price(product.getPrice())
+				.productImage(
+						product.getImages() != null && !product.getImages().isEmpty()
+								? product.getImages().get(0).getImageUrl()
+								: null
+				)
+				.productCategories(product.getCategories())
+
+				// Merchant
 				.merchantId(merchant.getId())
+				.merchantName(merchant.getUser().getFullName())
+				.merchantEmail(merchant.getUser().getEmail())
+				.merchantPhoto(merchant.getUser().getProfilePicture())
+
 				.build();
 	}
+
 }
