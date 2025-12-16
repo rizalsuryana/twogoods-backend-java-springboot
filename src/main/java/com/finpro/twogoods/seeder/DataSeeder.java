@@ -42,7 +42,7 @@ public class DataSeeder implements CommandLineRunner {
 				CustomerProfile.builder().user(c1).build(),
 				CustomerProfile.builder().user(c2).build(),
 				CustomerProfile.builder().user(c3).build()
-		));
+												 ));
 
 		// MERCHANTS
 		User m1 = createUser("merchant1@mail.com", "merch1", "Merchant One", UserRole.MERCHANT);
@@ -51,32 +51,32 @@ public class DataSeeder implements CommandLineRunner {
 
 		// 2 merchant ACCEPTED
 		MerchantProfile mp1 = MerchantProfile.builder()
-				.user(m1)
-				.location("Jakarta")
-				.NIK("1111111111111111")
-				.ktpPhoto(null)
-				.isVerified(MerchantStatus.ACCEPTED)
-				.rejectReason(null)
-				.build();
+											 .user(m1)
+											 .location("Jakarta")
+											 .NIK("1111111111111111")
+											 .ktpPhoto(null)
+											 .isVerified(MerchantStatus.ACCEPTED)
+											 .rejectReason(null)
+											 .build();
 
 		MerchantProfile mp2 = MerchantProfile.builder()
-				.user(m2)
-				.location("Bandung")
-				.NIK("2222222222222222")
-				.ktpPhoto(null)
-				.isVerified(MerchantStatus.ACCEPTED)
-				.rejectReason(null)
-				.build();
+											 .user(m2)
+											 .location("Bandung")
+											 .NIK("2222222222222222")
+											 .ktpPhoto(null)
+											 .isVerified(MerchantStatus.ACCEPTED)
+											 .rejectReason(null)
+											 .build();
 
 		// 1 merchant PENDING (tidak boleh jualan)
 		MerchantProfile mp3 = MerchantProfile.builder()
-				.user(m3)
-				.location("Surabaya")
-				.NIK("3333333333333333")
-				.ktpPhoto(null)
-				.isVerified(MerchantStatus.PENDING)
-				.rejectReason(null)
-				.build();
+											 .user(m3)
+											 .location("Surabaya")
+											 .NIK("3333333333333333")
+											 .ktpPhoto(null)
+											 .isVerified(MerchantStatus.PENDING)
+											 .rejectReason(null)
+											 .build();
 
 		merchantProfileRepository.saveAll(List.of(mp1, mp2, mp3));
 
@@ -96,13 +96,13 @@ public class DataSeeder implements CommandLineRunner {
 
 	private User createUser(String email, String username, String name, UserRole role) {
 		User user = User.builder()
-				.email(email)
-				.username(username)
-				.fullName(name)
-				.password(passwordEncoder.encode("password"))
-				.role(role)
-				.enabled(true)
-				.build();
+						.email(email)
+						.username(username)
+						.fullName(name)
+						.password(passwordEncoder.encode("password"))
+						.role(role)
+						.enabled(true)
+						.build();
 		return userRepository.save(user);
 	}
 
@@ -119,15 +119,15 @@ public class DataSeeder implements CommandLineRunner {
 			Categories randomCategory = allCategories[random.nextInt(allCategories.length)];
 
 			Product p = Product.builder()
-					.merchant(merchant)
-					.name(baseName + " " + i)
-					.description("Deskripsi produk " + baseName + " nomor " + i)
-					.price(BigDecimal.valueOf(50000 + (i * 10000)))
-					.categories(List.of(randomCategory))
-					.color("random")
-					.isAvailable(true)
-					.condition(ProductCondition.USED)
-					.build();
+							   .merchant(merchant)
+							   .name(baseName + " " + i)
+							   .description("Deskripsi produk " + baseName + " nomor " + i)
+							   .price(BigDecimal.valueOf(50000 + (i * 10000)))
+							   .categories(List.of(randomCategory))
+							   .color("random")
+							   .isAvailable(true)
+							   .condition(ProductCondition.USED)
+							   .build();
 
 			productRepository.save(p);
 		}
@@ -139,29 +139,30 @@ public class DataSeeder implements CommandLineRunner {
 		if (product == null) return;
 
 		Transaction trx = Transaction.builder()
-				.customer(customer)
-				.merchant(merchant)
-				.status(OrderStatus.COMPLETED)
-				.totalPrice(product.getPrice())
-				.build();
+									 .customer(customer)
+									 .merchant(merchant)
+				.orderId("ORDER-" + transactionRepository.count())
+									 .status(OrderStatus.COMPLETED)
+									 .totalPrice(product.getPrice())
+									 .build();
 
 		TransactionItem item = TransactionItem.builder()
-				.transaction(trx)
-				.product(product)
-				.price(product.getPrice())
-				.quantity(1)
-				.build();
+											  .transaction(trx)
+											  .product(product)
+											  .price(product.getPrice())
+											  .quantity(1)
+											  .build();
 
 		trx.getItems().add(item);
 		transactionRepository.save(trx);
 
 		MerchantReview review = MerchantReview.builder()
-				.merchant(merchant)
-				.user(customer)
-				.transaction(trx)
-				.rating(3f + random.nextFloat() * 2f)
-				.comment("Produk bagus, recommended")
-				.build();
+											  .merchant(merchant)
+											  .user(customer)
+											  .transaction(trx)
+											  .rating(3f + random.nextFloat() * 2f)
+											  .comment("Produk bagus, recommended")
+											  .build();
 
 		reviewRepository.save(review);
 	}

@@ -7,11 +7,17 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "transactions")
+@Table(
+		name = "transactions",
+		indexes = {
+				@Index(name = "idx_transaction_order_id", columnList = "orderId")
+		}
+)
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -19,37 +25,61 @@ import java.util.List;
 @Builder
 public class Transaction extends BaseEntity {
 
+	@Column(nullable = false, updatable = false)
+	private String orderId;
+
 	@ManyToOne
-	@JoinColumn(name = "customer_id")
+	@JoinColumn(name = "customer_id", nullable = false)
 	private User customer;
 
 	@ManyToOne
-	@JoinColumn(name = "merchant_id")
+	@JoinColumn(name = "merchant_id", nullable = false)
 	private MerchantProfile merchant;
 
 	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
 	private OrderStatus status;
 
+	@Column(nullable = false)
 	private BigDecimal totalPrice;
-
-	private String orderId;
 
 	@OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL)
 	@Builder.Default
 	private List<TransactionItem> items = new ArrayList<>();
 
+	//cancel both cust and merch....
+	@Builder.Default
+	private Boolean customerCancelRequest = false;
 
+	@Builder.Default
+	private Boolean merchantCancelConfirm = false;
+
+	@Builder.Default
+	private Boolean customerReturnRequest = false;
+
+	@Builder.Default
+	private Boolean merchantReturnConfirm = false;
+
+	private LocalDateTime returnRequestedAt;
+	private LocalDateTime cancelRequestedAt;
 
 	public TransactionResponse toResponse() {
-		return TransactionResponse.builder()
+		return TransactionResponse
+				.builder()
 				.id(getId())
-				.customerId(customer != null ? customer.getId() : null)
-				.merchantId(merchant != null ? merchant.getId() : null)
+				.orderId(orderId)
+				.customerId(customer.getId())
+				.merchantId(merchant.getId())
 				.status(status)
 				.totalPrice(totalPrice)
 				.createdAt(getCreatedAt())
 				.updatedAt(getUpdatedAt())
 				.orderId(getOrderId())
+				.customerCancelRequest(customerCancelRequest)
+				.merchantCancelConfirm(merchantCancelConfirm)
+				.customerReturnRequest(customerReturnRequest)
+				.merchantReturnConfirm(merchantReturnConfirm)
+				.returnRequestedAt(returnRequestedAt)
 				.items(
 						items.stream()
 								.map(item -> TransactionItemResponse.builder()

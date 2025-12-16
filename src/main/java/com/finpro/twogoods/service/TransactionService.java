@@ -12,16 +12,19 @@ import com.finpro.twogoods.repository.MerchantProfileRepository;
 import com.finpro.twogoods.repository.ProductRepository;
 import com.finpro.twogoods.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class TransactionService {
 
 	private final TransactionRepository transactionRepository;
@@ -33,6 +36,8 @@ public class TransactionService {
 	@Transactional(rollbackFor = Exception.class)
 	public TransactionResponse buyNow(Long productId) {
 		User user = getCurrentUser();
+
+		String orderId = "ORDER-" + user.getId() + UUID.randomUUID();
 
 		if (!user.getRole().equals(UserRole.CUSTOMER)) {
 			throw new ApiException("Only customers can buy products");
@@ -51,6 +56,7 @@ public class TransactionService {
 
 		Transaction trx = Transaction.builder()
 				.customer(user)
+				.orderId(orderId)
 				.merchant(product.getMerchant())
 				.status(OrderStatus.PENDING)
 				.totalPrice(product.getPrice())
@@ -77,8 +83,7 @@ public class TransactionService {
 				MidtransSnapRequest
 						.TransactionDetails.builder()
 										   .grossAmount(product.getPrice().intValue())
-										   .orderId("ORDER-" + (transactionRepository.count() == 0 ? 1 :
-																transactionRepository.count() + 1))
+										   .orderId(orderId)
 										   .build();
 
 		MidtransSnapRequest req = MidtransSnapRequest.builder()
@@ -87,6 +92,8 @@ public class TransactionService {
 															 "https://www.2goods.com"))
 													 .build();
 		MidtransSnapResponse midtransResponse = midtransService.createSnap(req);
+		log.info("CREATE SNAP WITH ORDER ID: {}", orderId);
+
 
 		res.setMidtransSnapResponse(midtransResponse);
 
@@ -161,25 +168,41 @@ public class TransactionService {
 		switch (newStatus) {
 
 			case PAID:
-				if (!isMerchant) throw new ApiException("Only merchant can set PAID");
-				if (currentStatus != OrderStatus.PENDING) {throw new ApiException("PAID can only be set from PENDING");}
+				throw new ApiException(
+					"PAID status is managed by Midtrans"
+			);
+			case PACKING:
+				if (!isMerchant) throw new ApiException("Only merchant can set PACKING");
+				if (currentStatus != OrderStatus.PAID) {
+					throw new ApiException("PACKING can only be set from PAID");
+				}
 				break;
 
 			case SHIPPED:
 				if (!isMerchant) throw new ApiException("Only merchant can set SHIPPED");
-				if (currentStatus != OrderStatus.PAID) {throw new ApiException("SHIPPED can only be set from PAID");}
+				if (currentStatus != OrderStatus.PACKING) {
+					throw new ApiException("SHIPPED can only be set from PACKING");
+				}
+				break;
+
+			case DELIVERING:
+				if (!isMerchant) throw new ApiException("Only merchant can set DELIVERING");
+				if (currentStatus != OrderStatus.SHIPPED) {
+					throw new ApiException("DELIVERING can only be set from SHIPPED");
+				}
 				break;
 
 			case COMPLETED:
 				if (!isCustomer) throw new ApiException("Only customer can set COMPLETED");
-				if (currentStatus != OrderStatus.SHIPPED) {
-					throw new ApiException("COMPLETED can only be set from SHIPPED");
+				if (currentStatus != OrderStatus.DELIVERING) {
+					throw new ApiException("COMPLETED can only be set from DELIVERING");
 				}
 				break;
 
 			case CANCELED:
-				if (!isCustomer) throw new ApiException("Only customer can cancel");
-				if (currentStatus == OrderStatus.SHIPPED || currentStatus == OrderStatus.COMPLETED) {
+				if (currentStatus == OrderStatus.SHIPPED
+						|| currentStatus == OrderStatus.DELIVERING
+						|| currentStatus == OrderStatus.COMPLETED) {
 					throw new ApiException("Cannot cancel after item is shipped");
 				}
 				break;
@@ -194,9 +217,110 @@ public class TransactionService {
 		return updated.toResponse();
 	}
 
+	//	Req cancel si cust
+	@Transactional(rollbackFor = Exception.class)
+	public TransactionResponse requestCancel(Long id) {
+		User user = getCurrentUser();
+		Transaction trx = transactionRepository.findById(id)
+				.orElseThrow(() -> new ApiException("Transaction not found"));
+
+		if (!trx.getCustomer().getId().equals(user.getId())) {
+			throw new ApiException("Only customer can request cancel");
+		}
+
+		if (trx.getStatus() == OrderStatus.SHIPPED
+				|| trx.getStatus() == OrderStatus.DELIVERING
+				|| trx.getStatus() == OrderStatus.COMPLETED) {
+			throw new ApiException("Cannot cancel after shipped");
+		}
+
+		trx.setCustomerCancelRequest(true);
+//		counting wkwk
+		trx.setCancelRequestedAt(LocalDateTime.now());
+
+		Transaction saved = transactionRepository.save(trx);
+		return saved.toResponse();
+	}
+
+	//merch confirm cancel
+	@Transactional(rollbackFor = Exception.class)
+	public TransactionResponse confirmCancel(Long id) {
+		User user = getCurrentUser();
+		Transaction trx = transactionRepository.findById(id)
+				.orElseThrow(() -> new ApiException("Transaction not found"));
+
+		if (!trx.getMerchant().getUser().getId().equals(user.getId())) {
+			throw new ApiException("Only merchant can confirm cancel");
+		}
+
+		if (!Boolean.TRUE.equals(trx.getCustomerCancelRequest())) {
+			throw new ApiException("Customer has not requested cancel");
+		}
+
+		trx.setMerchantCancelConfirm(true);
+		trx.setStatus(OrderStatus.CANCELED);
+
+		// balikin stock/availability product
+		trx.getItems().forEach(item -> {
+			Product p = item.getProduct();
+			p.setIsAvailable(true);
+			productRepository.save(p);
+		});
+
+		Transaction saved = transactionRepository.save(trx);
+		return saved.toResponse();
+	}
+
+
+	//cust req return
+	@Transactional(rollbackFor = Exception.class)
+	public TransactionResponse requestReturn(Long id) {
+		User user = getCurrentUser();
+		Transaction trx = transactionRepository.findById(id)
+				.orElseThrow(() -> new ApiException("Transaction not found"));
+
+		if (!trx.getCustomer().getId().equals(user.getId())) {
+			throw new ApiException("Only customer can request return");
+		}
+
+		if (trx.getStatus() != OrderStatus.COMPLETED) {
+			throw new ApiException("Return is only allowed after COMPLETED");
+		}
+
+		trx.setCustomerReturnRequest(true);
+//		time for auto cancel
+		trx.setReturnRequestedAt(LocalDateTime.now());
+
+		Transaction saved = transactionRepository.save(trx);
+		return saved.toResponse();
+	}
+
+	//merchant confirm return
+	@Transactional(rollbackFor = Exception.class)
+	public TransactionResponse confirmReturn(Long id) {
+		User user = getCurrentUser();
+		Transaction trx = transactionRepository.findById(id)
+				.orElseThrow(() -> new ApiException("Transaction not found"));
+
+		if (!trx.getMerchant().getUser().getId().equals(user.getId())) {
+			throw new ApiException("Only merchant can confirm return");
+		}
+
+		if (!Boolean.TRUE.equals(trx.getCustomerReturnRequest())) {
+			throw new ApiException("Customer has not requested return");
+		}
+
+		trx.setMerchantReturnConfirm(true);
+		trx.setStatus(OrderStatus.RETURNED);
+
+		Transaction saved = transactionRepository.save(trx);
+		return saved.toResponse();
+	}
+
+
 	private User getCurrentUser() {
 		return (User) SecurityContextHolder.getContext()
-										   .getAuthentication()
-										   .getPrincipal();
+				.getAuthentication()
+				.getPrincipal();
 	}
 }

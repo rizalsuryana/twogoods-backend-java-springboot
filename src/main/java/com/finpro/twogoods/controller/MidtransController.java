@@ -2,14 +2,18 @@ package com.finpro.twogoods.controller;
 
 import com.finpro.twogoods.client.dto.MidtransNotification;
 import com.finpro.twogoods.client.dto.MidtransRefundResponse;
+import com.finpro.twogoods.dto.response.TransactionResponse;
+import com.finpro.twogoods.entity.Transaction;
 import com.finpro.twogoods.service.MidtransService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/midtrans")
 @RequiredArgsConstructor
+@Slf4j
 public class MidtransController {
 
 	private final MidtransService midtransService;
@@ -17,6 +21,7 @@ public class MidtransController {
 	@PostMapping("/notification")
 	public ResponseEntity<String> webhook(@RequestBody MidtransNotification notif) {
 
+		log.info("MIDTRANS NOTIF RECEIVED: {}", notif);
 		boolean valid = midtransService.isValidSignature(
 				notif.getOrderId(),
 				notif.getStatusCode(),
@@ -24,11 +29,14 @@ public class MidtransController {
 				notif.getSignatureKey()
 														);
 
+		log.info("SIGNATURE VALID = {}", valid);
+
 		if (!valid) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("INVALID");
 		}
+		TransactionResponse trx = midtransService.updateStatus(notif);
+		log.info("TRANSACTION UPDATED: {}", trx.getStatus());
 
-		midtransService.updateStatus(notif);
 		return ResponseEntity.ok("OK");
 	}
 

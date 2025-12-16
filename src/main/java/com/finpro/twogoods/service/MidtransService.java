@@ -12,6 +12,7 @@ import com.finpro.twogoods.exceptions.ResourceNotFoundException;
 import com.finpro.twogoods.repository.ProductRepository;
 import com.finpro.twogoods.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class MidtransService {
 
 	private final MidtransFeignClient midtransFeignClient;
@@ -32,6 +34,10 @@ public class MidtransService {
 
 	@Transactional(rollbackFor = Exception.class)
 	public MidtransSnapResponse createSnap(MidtransSnapRequest request) {
+		log.error("CALL MIDTRANS SNAP ORDER_ID={}",
+				  request.getTransactionDetails()
+						 .getOrderId());
+
 		return midtransFeignClient.createTransaction(request);
 	}
 
