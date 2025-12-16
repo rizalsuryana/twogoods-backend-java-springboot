@@ -42,13 +42,15 @@ public interface ProductRepository extends JpaRepository<Product, Long>,
 //product si merhant
 @Query("""
     SELECT p FROM Product p
+    LEFT JOIN p.categories c
     WHERE p.merchant.id = :merchantId
-    AND (:search IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')))
     AND (:available IS NULL OR p.isAvailable = :available)
     AND (:condition IS NULL OR p.condition = :condition)
-    AND (:category IS NULL OR EXISTS (
-        SELECT 1 FROM p.categories c WHERE c = :category
-    ))
+    AND (
+        COALESCE(:search, '') = '' 
+        OR LOWER(p.name) LIKE LOWER(CONCAT('%', COALESCE(:search, ''), '%'))
+    )
+    AND (:category IS NULL OR c = :category)
 """)
 Page<Product> findMerchantProducts(
 		@Param("merchantId") Long merchantId,
@@ -58,7 +60,6 @@ Page<Product> findMerchantProducts(
 		@Param("category") Categories category,
 		Pageable pageable
 );
-
 
 
 }

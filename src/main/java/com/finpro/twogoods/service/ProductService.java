@@ -297,9 +297,12 @@ public class ProductService {
 	) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
+		// search harus SELALU string, tidak boleh null untuk tidak byta
+		String safeSearch = (search == null) ? "" : search.trim().toLowerCase();
+
 		Page<Product> result = productRepository.findMerchantProducts(
 				merchantId,
-				(search == null || search.isBlank()) ? null : search.toLowerCase(),
+				safeSearch,
 				available,
 				condition,
 				category,
@@ -308,7 +311,6 @@ public class ProductService {
 
 		return result.map(Product::toResponse);
 	}
-
 
 
 
