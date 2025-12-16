@@ -8,7 +8,6 @@ import com.finpro.twogoods.entity.*;
 import com.finpro.twogoods.enums.OrderStatus;
 import com.finpro.twogoods.exceptions.ApiException;
 import com.finpro.twogoods.repository.CartItemRepository;
-import com.finpro.twogoods.repository.ProductRepository;
 import com.finpro.twogoods.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,11 +27,19 @@ public class CheckoutService {
 	private final TransactionRepository transactionRepository;
 	private final MidtransService midtransService;
 
-	@Transactional
+	@Transactional(rollbackFor = Exception.class)
 	public CheckoutResponse checkout(List<Long> cartItemIds) {
+
+		if (cartItemIds == null || cartItemIds.isEmpty()) {
+			throw new ApiException("No cart items selected");
+		}
 
 		User user = getCurrentUser();
 		List<CartItem> items = cartItemRepository.findByIdIn(cartItemIds);
+
+		if (items.isEmpty()) {
+			throw new ApiException("No valid cart items found for this user");
+		}
 
 		String orderId = "ORDER-" + user.getId() + "-" + UUID.randomUUID();
 		int total = 0;
@@ -70,6 +77,10 @@ public class CheckoutService {
 			responses.add(trx.toResponse());
 		}
 
+		// Hapus hanya cart item yang di-checkout
+		cartItemRepository.deleteAll(items);
+
+
 		MidtransSnapResponse snap = midtransService.createSnap(
 				MidtransSnapRequest.builder()
 								   .transactionDetails(
@@ -78,6 +89,9 @@ public class CheckoutService {
 																				 .grossAmount(total)
 																				 .build()
 													  )
+								   .callbacks(
+										   new MidtransSnapRequest
+												   .Callbacks("https://www.2goods.com"))
 								   .build()
 															  );
 

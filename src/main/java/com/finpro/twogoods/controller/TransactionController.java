@@ -26,8 +26,6 @@ public class TransactionController {
 
 	private final TransactionService transactionService;
 
-	/* ================= BUY NOW ================= */
-
 	@PostMapping("/buy-now/{productId}")
 	public ResponseEntity<ApiResponse<TransactionResponse>> buyNow(
 			@PathVariable Long productId
@@ -38,8 +36,6 @@ public class TransactionController {
 				transactionService.buyNow(productId)
 											   );
 	}
-
-	/* ================= DETAIL ================= */
 
 	@Operation(
 			summary = "Get transaction detail",
@@ -59,8 +55,6 @@ public class TransactionController {
 											   );
 	}
 
-	/* ================= CUSTOMER ================= */
-
 	@Operation(
 			summary = "Get my transactions",
 			description = "Get all transactions created by the logged-in customer."
@@ -74,7 +68,6 @@ public class TransactionController {
 											   );
 	}
 
-	/* ================= MERCHANT ================= */
 
 	@Operation(
 			summary = "Get merchant orders",
@@ -88,8 +81,7 @@ public class TransactionController {
 				transactionService.getMerchantOrders()
 											   );
 	}
-
-	/* ================= UPDATE STATUS ================= */
+	
 
 	@Operation(
 			summary = "Update transaction status",
