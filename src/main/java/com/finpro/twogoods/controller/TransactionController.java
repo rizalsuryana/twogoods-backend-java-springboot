@@ -64,7 +64,7 @@ public class TransactionController {
 	)
 	@GetMapping("/me")
 	public ResponseEntity<ApiResponse<PagedResult<TransactionResponse>>> myTransactions(
-			@RequestParam(defaultValue = "1") Integer page,
+			@RequestParam(defaultValue = "0") Integer page,
 			@RequestParam(defaultValue = "10") Integer rowsPerPage,
 			@RequestParam(required = false) OrderStatus status,
 			@RequestParam(required = false) String search,
@@ -90,7 +90,7 @@ public class TransactionController {
 	)
 	@GetMapping("/merchant")
 	public ResponseEntity<ApiResponse<PagedResult<TransactionResponse>>> merchantOrders(
-			@RequestParam(defaultValue = "1") Integer page,
+			@RequestParam(defaultValue = "0") Integer page,
 			@RequestParam(defaultValue = "10") Integer rowsPerPage,
 			@RequestParam(required = false) OrderStatus status,
 			@RequestParam(required = false) String search,
