@@ -143,7 +143,7 @@ public class TransactionService {
 		User customer = getCurrentUser();
 
 		Pageable pageable = PageRequest.of(
-				page - 1,
+				page,
 				rowsPerPage,
 				sortDir.equalsIgnoreCase("ASC")
 						? Sort.by(sortBy).ascending()
@@ -162,19 +162,7 @@ public class TransactionService {
 				pageable
 		);
 
-		PagingResponse paging = PagingResponse.builder()
-				.page(page)
-				.rowsPerPage(rowsPerPage)
-				.totalRows(result.getTotalElements())
-				.totalPages(result.getTotalPages())
-				.hasNext(result.hasNext())
-				.hasPrevious(result.hasPrevious())
-				.build();
-
-		return PagedResult.<TransactionResponse>builder()
-				.paging(paging)
-				.data(result.getContent().stream().map(Transaction::toResponse).toList())
-				.build();
+		return getTransactionResponsePagedResult(page, rowsPerPage, result);
 	}
 
 
@@ -195,7 +183,7 @@ public class TransactionService {
 				.orElseThrow(() -> new ApiException("Merchant profile not found"));
 
 		Pageable pageable = PageRequest.of(
-				page - 1,
+				page,
 				rowsPerPage,
 				sortDir.equalsIgnoreCase("ASC")
 						? Sort.by(sortBy).ascending()
@@ -214,6 +202,10 @@ public class TransactionService {
 				pageable
 		);
 
+		return getTransactionResponsePagedResult(page, rowsPerPage, result);
+	}
+
+	private PagedResult<TransactionResponse> getTransactionResponsePagedResult(Integer page, Integer rowsPerPage, Page<Transaction> result) {
 		PagingResponse paging = PagingResponse.builder()
 				.page(page)
 				.rowsPerPage(rowsPerPage)
@@ -228,7 +220,6 @@ public class TransactionService {
 				.data(result.getContent().stream().map(Transaction::toResponse).toList())
 				.build();
 	}
-
 
 
 	// UPDATE STATUS
