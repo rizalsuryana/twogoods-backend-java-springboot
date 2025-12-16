@@ -282,4 +282,32 @@ public class ProductService {
 				.getAuthentication()
 				.getPrincipal();
 	}
+
+
+	// GET MERCHANT PRODUCTS WITH PAGINATION + SEARCH + FILTER
+	@Transactional(readOnly = true)
+	public Page<ProductResponse> getMerchantProducts(
+			Long merchantId,
+			int page,
+			int size,
+			String search,
+			Boolean available,
+			ProductCondition condition,
+			Categories category
+	) {
+		Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+		Page<Product> result = productRepository.findMerchantProducts(
+				merchantId,
+				(search == null || search.isBlank()) ? null : search.toLowerCase(),
+				available,
+				condition,
+				category,
+				pageable
+		);
+
+		return result.map(Product::toResponse);
+	}
+
+
 }

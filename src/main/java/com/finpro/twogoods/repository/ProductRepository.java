@@ -39,5 +39,22 @@ public interface ProductRepository extends JpaRepository<Product, Long>,
 	);
 
 
+//product si merhant
+@Query("""
+    SELECT p FROM Product p
+    WHERE p.merchant.id = :merchantId
+    AND (:search IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')))
+    AND (:available IS NULL OR p.isAvailable = :available)
+    AND (:condition IS NULL OR p.condition = :condition)
+    AND (:category IS NULL OR :category MEMBER OF p.categories)
+""")
+Page<Product> findMerchantProducts(
+		@Param("merchantId") Long merchantId,
+		@Param("search") String search,
+		@Param("available") Boolean available,
+		@Param("condition") ProductCondition condition,
+		@Param("category") Categories category,
+		Pageable pageable
+);
 
 }

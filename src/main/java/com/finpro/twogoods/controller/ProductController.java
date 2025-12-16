@@ -2,10 +2,7 @@ package com.finpro.twogoods.controller;
 
 import com.finpro.twogoods.dto.request.ProductRequest;
 import com.finpro.twogoods.dto.request.SuggestPriceRequest;
-import com.finpro.twogoods.dto.response.ApiResponse;
-import com.finpro.twogoods.dto.response.ProductImageResponse;
-import com.finpro.twogoods.dto.response.ProductResponse;
-import com.finpro.twogoods.dto.response.SuggestPriceResponse;
+import com.finpro.twogoods.dto.response.*;
 import com.finpro.twogoods.enums.Categories;
 import com.finpro.twogoods.enums.ProductCondition;
 import com.finpro.twogoods.service.AiPriceService;
@@ -167,30 +164,6 @@ public class ProductController {
 		);
 	}
 
-//	@Operation(summary = "Upload single product image", description = "Upload a single image for a product. Only the owner merchant can upload.")
-//	@PostMapping(
-//			value = "/{productId}/upload-image",
-//			consumes = "multipart/form-data"
-//	)
-//	public ResponseEntity<ApiResponse<ProductImageResponse>> uploadImage(
-//			@PathVariable Long productId,
-//
-//			@Parameter(
-//					description = "Upload a single image file",
-//					required = true,
-//					schema = @Schema(type = "string", format = "binary")
-//			)
-//			@RequestParam("file") MultipartFile file
-//	) throws IOException {
-//
-//		return ResponseUtil.buildSingleResponse(
-//				HttpStatus.OK,
-//				"Image uploaded successfully",
-//				productService.uploadProductImage(productId, file)
-//		);
-//	}
-
-
 	@Operation(summary = "Upload multiple product images", description = "Upload multiple images for a product. Only the owner merchant can upload.")
 	@PostMapping(
 			value = "/{productId}/upload-multi-images",
@@ -240,5 +213,26 @@ public class ProductController {
 		);
 	}
 
+//	merchant product
+@GetMapping("/merchant/{merchantId}")
+public ResponseEntity<ApiResponse<PagedResult<ProductResponse>>> getMerchantProducts(
+		@PathVariable Long merchantId,
+		@RequestParam(defaultValue = "0") int page,
+		@RequestParam(defaultValue = "10") int size,
+		@RequestParam(required = false) String search,
+		@RequestParam(required = false) Boolean available,
+		@RequestParam(required = false) ProductCondition condition,
+		@RequestParam(required = false) Categories category
+) {
+	Page<ProductResponse> result = productService.getMerchantProducts(
+			merchantId, page, size, search, available, condition, category
+	);
+
+	return ResponseUtil.buildSingleResponse(
+			HttpStatus.OK,
+			"Products fetched successfully",
+			PagedResult.from(result)
+	);
+}
 
 }
