@@ -21,6 +21,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import static com.finpro.twogoods.enums.OrderStatus.*;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -58,7 +60,7 @@ public class TransactionService {
 				.customer(user)
 				.orderId(orderId)
 				.merchant(product.getMerchant())
-				.status(OrderStatus.PENDING)
+				.status(PENDING)
 				.totalPrice(product.getPrice())
 				.build();
 
@@ -173,36 +175,36 @@ public class TransactionService {
 			);
 			case PACKING:
 				if (!isMerchant) throw new ApiException("Only merchant can set PACKING");
-				if (currentStatus != OrderStatus.PAID) {
+				if (currentStatus != PAID) {
 					throw new ApiException("PACKING can only be set from PAID");
 				}
 				break;
 
 			case SHIPPED:
 				if (!isMerchant) throw new ApiException("Only merchant can set SHIPPED");
-				if (currentStatus != OrderStatus.PACKING) {
+				if (currentStatus != PACKING) {
 					throw new ApiException("SHIPPED can only be set from PACKING");
 				}
 				break;
 
 			case DELIVERING:
 				if (!isMerchant) throw new ApiException("Only merchant can set DELIVERING");
-				if (currentStatus != OrderStatus.SHIPPED) {
+				if (currentStatus != SHIPPED) {
 					throw new ApiException("DELIVERING can only be set from SHIPPED");
 				}
 				break;
 
 			case COMPLETED:
 				if (!isCustomer) throw new ApiException("Only customer can set COMPLETED");
-				if (currentStatus != OrderStatus.DELIVERING) {
+				if (currentStatus != DELIVERING) {
 					throw new ApiException("COMPLETED can only be set from DELIVERING");
 				}
 				break;
 
 			case CANCELED:
-				if (currentStatus == OrderStatus.SHIPPED
-						|| currentStatus == OrderStatus.DELIVERING
-						|| currentStatus == OrderStatus.COMPLETED) {
+				if (currentStatus == SHIPPED
+						|| currentStatus == DELIVERING
+						|| currentStatus == COMPLETED) {
 					throw new ApiException("Cannot cancel after item is shipped");
 				}
 				break;
@@ -228,9 +230,9 @@ public class TransactionService {
 			throw new ApiException("Only customer can request cancel");
 		}
 
-		if (trx.getStatus() == OrderStatus.SHIPPED
-				|| trx.getStatus() == OrderStatus.DELIVERING
-				|| trx.getStatus() == OrderStatus.COMPLETED) {
+		if (trx.getStatus() == SHIPPED
+				|| trx.getStatus() == DELIVERING
+				|| trx.getStatus() == COMPLETED) {
 			throw new ApiException("Cannot cancel after shipped");
 		}
 
@@ -259,6 +261,13 @@ public class TransactionService {
 
 		trx.setMerchantCancelConfirm(true);
 		trx.setStatus(OrderStatus.CANCELED);
+
+		if (trx.getStatus() == PENDING) {
+			midtransService.directRefund(trx.getOrderId(), trx.getTotalPrice().intValue());
+		}
+		if (trx.getStatus() == PAID) {
+			midtransService.refund(trx.getOrderId(), trx.getTotalPrice().intValue());
+		}
 
 		// balikin stock/availability product
 		trx.getItems().forEach(item -> {
@@ -308,6 +317,13 @@ public class TransactionService {
 
 		if (!Boolean.TRUE.equals(trx.getCustomerReturnRequest())) {
 			throw new ApiException("Customer has not requested return");
+		}
+
+		if (trx.getStatus() == PENDING) {
+			midtransService.directRefund(trx.getOrderId(), trx.getTotalPrice().intValue());
+		}
+		if (trx.getStatus() == PAID) {
+			midtransService.refund(trx.getOrderId(), trx.getTotalPrice().intValue());
 		}
 
 		trx.setMerchantReturnConfirm(true);
