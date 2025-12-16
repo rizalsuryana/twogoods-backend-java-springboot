@@ -15,10 +15,11 @@ public class PagedResult<T> {
 
 
 //	product merchant helper
-	public static <T> PagedResult<T> from(Page<T> page) {
-		return PagedResult.<T>builder()
-				.data(page.getContent())
-				.paging(PagingResponse.from(page))
-				.build();
-	}
+public static <T> PagedResult<T> from(Page<T> page) {
+	return PagedResult.<T>builder()
+			.data(page.getContent())
+			.paging(PagingResponse.from(page))
+			.build();
+}
+
 }
