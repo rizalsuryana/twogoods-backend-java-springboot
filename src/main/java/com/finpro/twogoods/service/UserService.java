@@ -7,6 +7,7 @@ import com.finpro.twogoods.dto.response.UserResponse;
 import com.finpro.twogoods.entity.CustomerProfile;
 import com.finpro.twogoods.entity.MerchantProfile;
 import com.finpro.twogoods.entity.User;
+import com.finpro.twogoods.enums.MerchantStatus;
 import com.finpro.twogoods.enums.UserRole;
 import com.finpro.twogoods.exceptions.ResourceDuplicateException;
 import com.finpro.twogoods.exceptions.ResourceNotFoundException;
@@ -48,7 +49,7 @@ public class UserService implements UserDetailsService {
 	@Override
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 		return userRepository.findByEmail(email)
-							 .orElseThrow(() -> new UsernameNotFoundException("Email or password is incorrect"));
+				.orElseThrow(() -> new UsernameNotFoundException("Email or password is incorrect"));
 	}
 
 	@Transactional(rollbackFor = Exception.class)
@@ -58,22 +59,22 @@ public class UserService implements UserDetailsService {
 				request.getPassword(),
 				request.getConfirmPassword(),
 				request.getEmail()
-												);
+		);
 
 		User user = User.builder()
-						.username(username)
-						.email(request.getEmail())
-						.password(passwordEncoder.encode(request.getPassword()))
-						.fullName(request.getFullName())
-						.role(UserRole.CUSTOMER)
-						.enabled(true)
-						.build();
+				.username(username)
+				.email(request.getEmail())
+				.password(passwordEncoder.encode(request.getPassword()))
+				.fullName(request.getFullName())
+				.role(UserRole.CUSTOMER)
+				.enabled(true)
+				.build();
 
 		userRepository.save(user);
 
 		customerProfileRepository.save(
 				CustomerProfile.builder().user(user).build()
-									  );
+		);
 
 		return user;
 	}
@@ -90,22 +91,22 @@ public class UserService implements UserDetailsService {
 		String dummyPassword = UUID.randomUUID().toString();
 
 		User user = User.builder()
-						.username(username)
-						.email(email)
-						.password(passwordEncoder.encode(dummyPassword))
-						.fullName(fullName)
-						.role(UserRole.CUSTOMER)
-						.enabled(true)
-						.build();
+				.username(username)
+				.email(email)
+				.password(passwordEncoder.encode(dummyPassword))
+				.fullName(fullName)
+				.role(UserRole.CUSTOMER)
+				.enabled(true)
+				.build();
 
 		userRepository.save(user);
 
 		customerProfileRepository.save(
 				CustomerProfile.builder()
-							   .user(user)
-							   .location(null)
-							   .build()
-									  );
+						.user(user)
+						.location(null)
+						.build()
+		);
 
 		return user;
 	}
@@ -118,26 +119,27 @@ public class UserService implements UserDetailsService {
 				request.getPassword(),
 				request.getConfirmPassword(),
 				request.getEmail()
-												);
+		);
 
 		User user = User.builder()
-						.username(username)
-						.email(request.getEmail())
-						.password(passwordEncoder.encode(request.getPassword()))
-						.fullName(request.getFullName())
-						.role(UserRole.MERCHANT)
-						.enabled(true)
-						.build();
+				.username(username)
+				.email(request.getEmail())
+				.password(passwordEncoder.encode(request.getPassword()))
+				.fullName(request.getFullName())
+				.role(UserRole.MERCHANT)
+				.enabled(true)
+				.build();
 
 		userRepository.save(user);
 
 		merchantProfileRepository.save(
 				MerchantProfile.builder()
-							   .user(user)
-							   .location(null)
-							   .NIK(null)
-							   .build()
-									  );
+						.user(user)
+						.location(null)
+						.NIK(null)
+						.isVerified(MerchantStatus.NEW)
+						.build()
+		);
 
 		return user;
 	}
@@ -198,8 +200,8 @@ public class UserService implements UserDetailsService {
 		filtered = FilterHelper.searchUsers(filtered, search);
 
 		List<UserResponse> responses = filtered.stream()
-											   .map(User::toResponse)
-											   .toList();
+				.map(User::toResponse)
+				.toList();
 
 		return new PageImpl<>(responses, pageable, usersPage.getTotalElements());
 	}
@@ -209,7 +211,7 @@ public class UserService implements UserDetailsService {
 		User principal = (User) auth.getPrincipal();
 
 		User user = userRepository.findById(principal.getId())
-								  .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
 		return UserMapper.toFull(user);
 	}
@@ -243,6 +245,6 @@ public class UserService implements UserDetailsService {
 
 	public User getUserById(Long id) {
 		return userRepository.findById(id)
-							 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
 	}
 }
