@@ -1,26 +1,25 @@
 package com.finpro.twogoods.service;
 
 import com.finpro.twogoods.client.MidtransFeignClient;
-import com.finpro.twogoods.client.dto.*;
-import com.finpro.twogoods.dto.response.TransactionResponse;
-import com.finpro.twogoods.entity.Product;
+import com.finpro.twogoods.client.dto.MidtransRefundRequest;
+import com.finpro.twogoods.client.dto.MidtransRefundResponse;
+import com.finpro.twogoods.client.dto.MidtransSnapRequest;
+import com.finpro.twogoods.client.dto.MidtransSnapResponse;
 import com.finpro.twogoods.entity.Transaction;
-import com.finpro.twogoods.entity.TransactionItem;
 import com.finpro.twogoods.enums.OrderStatus;
 import com.finpro.twogoods.exceptions.ApiException;
-import com.finpro.twogoods.exceptions.ResourceNotFoundException;
-import com.finpro.twogoods.repository.ProductRepository;
 import com.finpro.twogoods.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Map;
+
+import static com.finpro.twogoods.enums.OrderStatus.*;
 
 @Service
 @RequiredArgsConstructor
@@ -37,8 +36,9 @@ public class MidtransService {
 	@Transactional(rollbackFor = Exception.class)
 	public MidtransSnapResponse createSnap(MidtransSnapRequest request) {
 		log.error("CALL MIDTRANS SNAP ORDER_ID={}",
-				request.getTransactionDetails()
-						.getOrderId());
+				  request.getTransactionDetails()
+						 .getOrderId()
+				 );
 
 		return midtransFeignClient.createTransaction(request);
 	}
@@ -48,17 +48,17 @@ public class MidtransService {
 	public MidtransRefundResponse refund(String orderId, int amount) {
 
 		Transaction trx = transactionRepository.findByOrderId(orderId)
-				.orElseThrow(() -> new ApiException("Transaction not found"));
+											   .orElseThrow(() -> new ApiException("Transaction not found"));
 
 		if (trx.getStatus() != OrderStatus.PAID &&
-				trx.getStatus() != OrderStatus.SHIPPED) {
+			trx.getStatus() != SHIPPED) {
 			throw new ApiException("Refund only allowed for PAID or SHIPPED transaction");
 		}
 
 		MidtransRefundRequest request = MidtransRefundRequest.builder()
-				.refund_amount(amount)
-				.refund_key("REF-" + System.currentTimeMillis())
-				.build();
+															 .refund_amount(amount)
+															 .refund_key("REF-" + System.currentTimeMillis())
+															 .build();
 
 		return midtransFeignClient.refund(orderId, request);
 	}
@@ -67,16 +67,16 @@ public class MidtransService {
 	public MidtransRefundResponse directRefund(String orderId, int amount) {
 
 		Transaction trx = transactionRepository.findByOrderId(orderId)
-				.orElseThrow(() -> new ApiException("Transaction not found"));
+											   .orElseThrow(() -> new ApiException("Transaction not found"));
 
 		if (trx.getStatus() != OrderStatus.PAID) {
 			throw new ApiException("Direct refund only allowed for PAID transaction");
 		}
 
 		MidtransRefundRequest request = MidtransRefundRequest.builder()
-				.refund_amount(amount)
-				.refund_key("DIRECT-" + System.currentTimeMillis())
-				.build();
+															 .refund_amount(amount)
+															 .refund_key("DIRECT-" + System.currentTimeMillis())
+															 .build();
 
 		return midtransFeignClient.directRefund(orderId, request);
 	}
@@ -86,81 +86,66 @@ public class MidtransService {
 			String statusCode,
 			String grossAmount,
 			String signatureKey
-	) {
-		try {
-			String raw =
-					orderId +
-							statusCode +
-							grossAmount +
-							serverKey;
+								   ) {
+		String raw = orderId + statusCode + grossAmount + serverKey;
+		String hashed = DigestUtils.sha512Hex(raw);
+		return hashed.equals(signatureKey);
+	}
 
-			MessageDigest md = MessageDigest.getInstance("SHA-512");
-			byte[] digest = md.digest(raw.getBytes(StandardCharsets.UTF_8));
+	public void updateStatus(Map<String, Object> payload) {
 
-			StringBuilder hex = new StringBuilder();
-			for (byte b : digest) {
-				hex.append(String.format("%02x", b));
+		String orderId = payload.get("order_id").toString();
+		String transactionStatus = payload.get("transaction_status").toString();
+		String fraudStatus = payload.getOrDefault("fraud_status", "").toString();
+
+		Transaction trx = transactionRepository.findByOrderId(orderId)
+											   .orElseThrow(() -> new ApiException("Transaction not found"));
+
+		// Jangan ganggu fulfillment
+		if (trx.getStatus() == PACKING
+			|| trx.getStatus() == SHIPPED
+			|| trx.getStatus() == DELIVERING
+			|| trx.getStatus() == COMPLETED) {
+			log.info("Skip Midtrans update for order {} status={}",
+					 orderId, trx.getStatus()
+					);
+			return;
+		}
+
+		switch (transactionStatus) {
+
+			case "capture" -> {
+				if ("accept".equalsIgnoreCase(fraudStatus)) {
+					markAsPaidIfNotYet(trx);
+				}
 			}
 
-			return hex.toString().equals(signatureKey);
+			case "settlement" -> markAsPaidIfNotYet(trx);
 
-		} catch (Exception e) {
-			return false;
-		}
-	}
+			case "pending" -> {
+				// do nothing, already pending
+			}
 
-	@Transactional(rollbackFor = Exception.class)
-	public TransactionResponse updateStatus(MidtransNotification notif) {
-
-		Transaction trx = transactionRepository.findByOrderId(notif.getOrderId())
-				.orElseThrow(() -> new ApiException("Order not found"));
-
-		OrderStatus currentStatus = trx.getStatus();
-
-		if (currentStatus == OrderStatus.PAID ||
-				currentStatus == OrderStatus.SHIPPED ||
-				currentStatus == OrderStatus.COMPLETED) {
-
-			return trx.toResponse();
-		}
-
-		/* ================= STATUS MAPPING ================= */
-		switch (notif.getTransactionStatus()) {
-
-			case "capture":
-				if ("accept".equalsIgnoreCase(notif.getFraudStatus())) {
-					trx.setStatus(OrderStatus.PAID);
+			case "expire", "cancel", "deny" -> {
+				if (trx.getStatus() != PAID) {
+					trx.setStatus(CANCELED);
 				}
-				break;
+			}
 
-			case "settlement":
-				trx.setStatus(OrderStatus.PAID);
-				break;
-
-			case "pending":
-				trx.setStatus(OrderStatus.PENDING);
-				break;
-
-			case "expire":
-			case "cancel":
-			case "deny":
-				trx.setStatus(OrderStatus.CANCELED);
-				break;
-
-			default:
-				return trx.toResponse();
+			default -> log.info("Unhandled Midtrans status: {}", transactionStatus);
 		}
 
-		// Paid auto cancel kalo gak di handle ama si merchant
-		if (trx.getStatus() == OrderStatus.PAID) {
-			trx.setPaidAt(LocalDateTime.now());
-			// auto cancel 24 jam dulu
-			trx.setAutoCancelAt(LocalDateTime.now().plusHours(24));
-		}
-
-
-		Transaction saved = transactionRepository.save(trx);
-		return saved.toResponse();
+		transactionRepository.save(trx);
 	}
+
+
+	private void markAsPaidIfNotYet(Transaction trx) {
+		if (trx.getStatus() == PAID) return;
+
+		trx.setStatus(PAID);
+		trx.setPaidAt(LocalDateTime.now());
+		trx.setAutoCancelAt(null);
+	}
+
 
 }
