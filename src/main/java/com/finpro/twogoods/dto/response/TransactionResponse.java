@@ -7,7 +7,6 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-
 @Getter
 @Setter
 @Builder
@@ -33,6 +32,11 @@ public class TransactionResponse {
 	private CustomerProfileResponse customer;
 	private MerchantProfileResponse merchant;
 
+	private Boolean alreadyRated;
+	private Long reviewId;
+	private Float rating;
+	private String comment;
 
 	private List<TransactionItemResponse> items;
 }
+

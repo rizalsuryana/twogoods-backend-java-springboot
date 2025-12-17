@@ -82,7 +82,7 @@ public class MerchantProfileService {
 		merchantProfileRepository.delete(profile);
 	}
 
-	private MerchantProfileResponse buildResponse(MerchantProfile profile) {
+	public MerchantProfileResponse buildResponse(MerchantProfile profile) {
 		Float avg = merchantReviewRepository.getAverageRating(profile.getId());
 		Long total = merchantReviewRepository.getTotalReviews(profile.getId());
 

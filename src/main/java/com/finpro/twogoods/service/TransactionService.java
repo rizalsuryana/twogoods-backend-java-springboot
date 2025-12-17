@@ -11,6 +11,7 @@ import com.finpro.twogoods.enums.UserRole;
 import com.finpro.twogoods.exceptions.ApiException;
 import com.finpro.twogoods.exceptions.ResourceNotFoundException;
 import com.finpro.twogoods.repository.MerchantProfileRepository;
+import com.finpro.twogoods.repository.MerchantReviewRepository;
 import com.finpro.twogoods.repository.ProductRepository;
 import com.finpro.twogoods.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ import static com.finpro.twogoods.enums.OrderStatus.*;
 @Slf4j
 public class TransactionService {
 
+	private final MerchantReviewRepository merchantReviewRepository;
 	private final TransactionRepository transactionRepository;
 	private final ProductRepository productRepository;
 	private final MerchantProfileRepository merchantProfileRepository;
@@ -117,7 +119,7 @@ public class TransactionService {
 		User currentUser = getCurrentUser();
 
 		Transaction trx = transactionRepository.findById(id)
-											   .orElseThrow(() -> new ApiException("Transaction not found"));
+				.orElseThrow(() -> new ApiException("Transaction not found"));
 
 		boolean isCustomer = trx.getCustomer().getId().equals(currentUser.getId());
 		boolean isMerchant = trx.getMerchant().getUser().getId().equals(currentUser.getId());
@@ -126,8 +128,19 @@ public class TransactionService {
 			throw new ApiException("You are not allowed to view this transaction");
 		}
 
-		return trx.toResponse();
+		// Ambil response dasar
+		TransactionResponse res = trx.toResponse();
+
+		merchantReviewRepository.findByTransactionId(id).ifPresent(review -> {
+			res.setAlreadyRated(true);
+			res.setReviewId(review.getId());
+			res.setRating(review.getRating());
+			res.setComment(review.getComment());
+		});
+
+		return res;
 	}
+
 
 	// GET CUSTOMER TRANSACTIONS
 	public PagedResult<TransactionResponse> getMyTransactions(

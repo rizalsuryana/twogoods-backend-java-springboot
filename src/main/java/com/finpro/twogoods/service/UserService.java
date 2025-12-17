@@ -45,6 +45,7 @@ public class UserService implements UserDetailsService {
 	private final CustomerProfileRepository customerProfileRepository;
 	private final MerchantProfileRepository merchantProfileRepository;
 	private final CloudinaryService cloudinaryService;
+	private final MerchantProfileService merchantProfileService;
 
 	@Override
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -214,7 +215,17 @@ public class UserService implements UserDetailsService {
 		User user = userRepository.findById(principal.getId())
 				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-		return UserMapper.toFull(user);
+//		return UserMapper.toFull(user);
+		UserResponse response = UserMapper.toFull(user);
+
+		if (user.getMerchantProfile() != null) {
+			response.setMerchantProfile(
+					merchantProfileService.buildResponse(user.getMerchantProfile())
+			);
+		}
+
+		return response;
+
 	}
 
 	private String validateUserOnRegister(String password, String confirmPassword, String email) {
