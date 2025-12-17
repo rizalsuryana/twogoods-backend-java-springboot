@@ -30,7 +30,7 @@ public class TransactionResponse {
 	private LocalDateTime returnRequestedAt;
 
 	private CustomerProfileResponse customer;
-	private MerchantProfileResponse merchant;
+	private MerchantSummaryResponse merchant;
 
 	private Boolean alreadyRated;
 	private Long reviewId;

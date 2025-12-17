@@ -91,12 +91,7 @@ public class Transaction extends BaseEntity {
 								? customer.getCustomerProfile().toResponse()
 								: null
 				)
-				.merchant(
-						merchant.getUser() != null && merchant.getUser().getMerchantProfile() != null
-								? merchant.getUser().getMerchantProfile().toResponse()
-								: null
-				)
-
+				.merchant(null)
 				.items(
 						items.stream()
 								.map(item -> TransactionItemResponse.builder()

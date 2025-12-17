@@ -2,6 +2,7 @@ package com.finpro.twogoods.service;
 
 import com.finpro.twogoods.client.dto.MidtransSnapRequest;
 import com.finpro.twogoods.client.dto.MidtransSnapResponse;
+import com.finpro.twogoods.dto.response.MerchantSummaryResponse;
 import com.finpro.twogoods.dto.response.PagedResult;
 import com.finpro.twogoods.dto.response.PagingResponse;
 import com.finpro.twogoods.dto.response.TransactionResponse;
@@ -93,15 +94,15 @@ public class TransactionService {
 		MidtransSnapRequest.TransactionDetails details =
 				MidtransSnapRequest
 						.TransactionDetails.builder()
-										   .grossAmount(product.getPrice().intValue())
-										   .orderId(orderId)
-										   .build();
+						.grossAmount(product.getPrice().intValue())
+						.orderId(orderId)
+						.build();
 
 		MidtransSnapRequest req = MidtransSnapRequest.builder()
-													 .transactionDetails(details)
-													 .callbacks(new MidtransSnapRequest.Callbacks(
-															 "https://www.2goods.com"))
-													 .build();
+				.transactionDetails(details)
+				.callbacks(new MidtransSnapRequest.Callbacks(
+						"https://www.2goods.com"))
+				.build();
 		MidtransSnapResponse midtransResponse = midtransService.createSnap(req);
 		log.info("CREATE SNAP WITH ORDER ID: {}", orderId);
 
@@ -130,6 +131,7 @@ public class TransactionService {
 
 		// Ambil response dasar
 		TransactionResponse res = trx.toResponse();
+		res.setMerchant(buildMerchantSummary(trx.getMerchant()));
 
 		merchantReviewRepository.findByTransactionId(id).ifPresent(review -> {
 			res.setAlreadyRated(true);
@@ -186,7 +188,12 @@ public class TransactionService {
 
 		return PagedResult.<TransactionResponse>builder()
 				.paging(paging)
-				.data(result.getContent().stream().map(Transaction::toResponse).toList())
+				.data(result.getContent().stream().map(trx -> {
+					TransactionResponse res = trx.toResponse();
+					res.setMerchant(buildMerchantSummary(trx.getMerchant()));
+					return res;
+				}).toList())
+
 				.build();
 	}
 
@@ -238,7 +245,12 @@ public class TransactionService {
 
 		return PagedResult.<TransactionResponse>builder()
 				.paging(paging)
-				.data(result.getContent().stream().map(Transaction::toResponse).toList())
+				.data(result.getContent().stream().map(trx -> {
+					TransactionResponse res = trx.toResponse();
+					res.setMerchant(buildMerchantSummary(trx.getMerchant()));
+					return res;
+				}).toList())
+
 				.build();
 	}
 
@@ -254,7 +266,12 @@ public class TransactionService {
 
 		return PagedResult.<TransactionResponse>builder()
 				.paging(paging)
-				.data(result.getContent().stream().map(Transaction::toResponse).toList())
+				.data(result.getContent().stream().map(trx -> {
+					TransactionResponse res = trx.toResponse();
+					res.setMerchant(buildMerchantSummary(trx.getMerchant()));
+					return res;
+				}).toList())
+
 				.build();
 	}
 
@@ -266,7 +283,7 @@ public class TransactionService {
 		User currentUser = getCurrentUser();
 
 		Transaction trx = transactionRepository.findById(id)
-											   .orElseThrow(() -> new ApiException("Transaction not found"));
+				.orElseThrow(() -> new ApiException("Transaction not found"));
 
 		boolean isCustomer = trx.getCustomer().getId().equals(currentUser.getId());
 		boolean isMerchant = trx.getMerchant().getUser().getId().equals(currentUser.getId());
@@ -281,8 +298,8 @@ public class TransactionService {
 
 			case PAID:
 				throw new ApiException(
-					"PAID status is managed by Midtrans"
-			);
+						"PAID status is managed by Midtrans"
+				);
 			case PACKING:
 				if (!isMerchant) throw new ApiException("Only merchant can set PACKING");
 				if (currentStatus != PAID) {
@@ -451,49 +468,65 @@ public class TransactionService {
 	}
 
 
-//	Reject Cancel
-@Transactional(rollbackFor = Exception.class)
-public TransactionResponse rejectCancel(Long id) {
-	User user = getCurrentUser();
-	Transaction trx = transactionRepository.findById(id)
-			.orElseThrow(() -> new ApiException("Transaction not found"));
+	//	Reject Cancel
+	@Transactional(rollbackFor = Exception.class)
+	public TransactionResponse rejectCancel(Long id) {
+		User user = getCurrentUser();
+		Transaction trx = transactionRepository.findById(id)
+				.orElseThrow(() -> new ApiException("Transaction not found"));
 
-	if (!trx.getMerchant().getUser().getId().equals(user.getId())) {
-		throw new ApiException("Only merchant can reject cancel");
+		if (!trx.getMerchant().getUser().getId().equals(user.getId())) {
+			throw new ApiException("Only merchant can reject cancel");
+		}
+
+		if (!Boolean.TRUE.equals(trx.getCustomerCancelRequest())) {
+			throw new ApiException("No cancel request to reject");
+		}
+
+		trx.setCustomerCancelRequest(false);
+		trx.setMerchantCancelConfirm(false);
+
+		Transaction saved = transactionRepository.save(trx);
+		return saved.toResponse();
 	}
 
-	if (!Boolean.TRUE.equals(trx.getCustomerCancelRequest())) {
-		throw new ApiException("No cancel request to reject");
+
+	//Reject Return
+	@Transactional(rollbackFor = Exception.class)
+	public TransactionResponse rejectReturn(Long id) {
+		User user = getCurrentUser();
+		Transaction trx = transactionRepository.findById(id)
+				.orElseThrow(() -> new ApiException("Transaction not found"));
+
+		if (!trx.getMerchant().getUser().getId().equals(user.getId())) {
+			throw new ApiException("Only merchant can reject return");
+		}
+
+		if (!Boolean.TRUE.equals(trx.getCustomerReturnRequest())) {
+			throw new ApiException("No return request to reject");
+		}
+
+		trx.setCustomerReturnRequest(false);
+		trx.setMerchantReturnConfirm(false);
+
+		Transaction saved = transactionRepository.save(trx);
+		return saved.toResponse();
 	}
 
-	trx.setCustomerCancelRequest(false);
-	trx.setMerchantCancelConfirm(false);
 
-	Transaction saved = transactionRepository.save(trx);
-	return saved.toResponse();
-}
+	private MerchantSummaryResponse buildMerchantSummary(MerchantProfile mp) {
+		Float avg = merchantReviewRepository.getAverageRating(mp.getId());
+		Long total = merchantReviewRepository.getTotalReviews(mp.getId());
 
-
-//Reject Return
-@Transactional(rollbackFor = Exception.class)
-public TransactionResponse rejectReturn(Long id) {
-	User user = getCurrentUser();
-	Transaction trx = transactionRepository.findById(id)
-			.orElseThrow(() -> new ApiException("Transaction not found"));
-
-	if (!trx.getMerchant().getUser().getId().equals(user.getId())) {
-		throw new ApiException("Only merchant can reject return");
+		return MerchantSummaryResponse.builder()
+				.id(mp.getId())
+				.fullName(mp.getUser().getFullName())
+				.email(mp.getUser().getEmail())
+				.profilePicture(mp.getUser().getProfilePicture())
+				.location(mp.getLocation())
+				.rating(avg != null ? avg : 0f)
+				.totalReviews(total != null ? total : 0L)
+				.build();
 	}
-
-	if (!Boolean.TRUE.equals(trx.getCustomerReturnRequest())) {
-		throw new ApiException("No return request to reject");
-	}
-
-	trx.setCustomerReturnRequest(false);
-	trx.setMerchantReturnConfirm(false);
-
-	Transaction saved = transactionRepository.save(trx);
-	return saved.toResponse();
-}
 
 }
