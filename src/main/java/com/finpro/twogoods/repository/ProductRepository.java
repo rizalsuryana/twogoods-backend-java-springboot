@@ -29,10 +29,10 @@ public interface ProductRepository extends JpaRepository<Product, Long>,
 	Product findFirstByMerchant(MerchantProfile merchant);
 
 	@Query("""
-        SELECT p FROM Product p
-        WHERE :category MEMBER OF p.categories
-        AND p.condition = :condition
-    """)
+			    SELECT p FROM Product p
+			    WHERE :category MEMBER OF p.categories
+			    AND p.condition = :condition
+			""")
 	List<Product> findSimilarProducts(
 			@Param("category") Categories category,
 			@Param("condition") ProductCondition condition
@@ -40,21 +40,21 @@ public interface ProductRepository extends JpaRepository<Product, Long>,
 
 	// PAGINATION PRODUCT MERCHANT
 	@Query("""
-        SELECT DISTINCT p FROM Product p
-        WHERE p.merchant.id = :merchantId
-        AND (:available IS NULL OR p.isAvailable = :available)
-        AND (:condition IS NULL OR p.condition = :condition)
-        AND (
-            COALESCE(:search, '') = '' 
-            OR LOWER(p.name) LIKE LOWER(CONCAT('%', COALESCE(:search, ''), '%'))
-        )
-        AND (
-            :category IS NULL OR EXISTS (
-                SELECT 1 FROM p.categories c WHERE c = :category
-            )
-        )
-        ORDER BY p.createdAt DESC
-    """)
+			    SELECT DISTINCT p FROM Product p
+			    WHERE p.merchant.id = :merchantId
+			    AND (:available IS NULL OR p.isAvailable = :available)
+			    AND (:condition IS NULL OR p.condition = :condition)
+			    AND (
+			        COALESCE(:search, '') = '' 
+			        OR LOWER(p.name) LIKE LOWER(CONCAT('%', COALESCE(:search, ''), '%'))
+			    )
+			    AND (
+			        :category IS NULL OR EXISTS (
+			            SELECT 1 FROM p.categories c WHERE c = :category
+			        )
+			    )
+			    ORDER BY p.createdAt DESC
+			""")
 	Page<Product> findMerchantProducts(
 			@Param("merchantId") Long merchantId,
 			@Param("search") String search,
@@ -63,4 +63,9 @@ public interface ProductRepository extends JpaRepository<Product, Long>,
 			@Param("category") Categories category,
 			Pageable pageable
 	);
+
+
+	//	random getall
+	@Query(value = "SELECT * FROM products ORDER BY RANDOM()", nativeQuery = true) List<Product> findAllRandom();
+
 }

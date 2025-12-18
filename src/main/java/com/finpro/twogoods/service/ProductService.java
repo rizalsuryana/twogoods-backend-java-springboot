@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.persistence.criteria.Predicate;
+
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -40,9 +41,9 @@ public class ProductService {
 	private final ProductImageRepository productImageRepository;
 	private final CloudinaryService cloudinaryService;
 
-// HELPER untuk si acc merchant
-	private void verifiedMerchant(MerchantProfile merchant){
-		if (merchant.getIsVerified() != MerchantStatus.ACCEPTED){
+	// HELPER untuk si acc merchant
+	private void verifiedMerchant(MerchantProfile merchant) {
+		if (merchant.getIsVerified() != MerchantStatus.ACCEPTED) {
 			throw new AccessDeniedException("Verify your merchant first");
 		}
 	}
@@ -86,6 +87,7 @@ public class ProductService {
 				.orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 		return product.toResponse();
 	}
+
 	// GET PRODUCTS WITH FILTER (multicategories + multi-keyword search)
 	@Transactional(readOnly = true)
 	public Page<ProductResponse> getProducts(
@@ -104,6 +106,24 @@ public class ProductService {
 		if (sort == null || "null".equalsIgnoreCase(sort) || sort.isBlank()) {
 			sort = "newest";
 		}
+
+
+		// new random sort
+		if ("random".equalsIgnoreCase(sort)) {
+			List<Product> randomProducts = productRepository.findAllRandom();
+
+			int start = page * size;
+			int end = Math.min(start + size, randomProducts.size());
+
+			List<ProductResponse> content = randomProducts
+					.subList(start, end)
+					.stream()
+					.map(Product::toResponse)
+					.toList();
+
+			return new PageImpl<>(content, PageRequest.of(page, size), randomProducts.size());
+		}
+
 
 		Pageable pageable = switch (sort) {
 			case "price_asc" -> PageRequest.of(page, size, Sort.by("price").ascending());
@@ -311,7 +331,6 @@ public class ProductService {
 
 		return result.map(Product::toResponse);
 	}
-
 
 
 }

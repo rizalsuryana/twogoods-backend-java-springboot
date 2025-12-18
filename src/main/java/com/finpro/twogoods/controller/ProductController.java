@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -36,7 +37,7 @@ public class ProductController {
 	@Operation(summary = "Create product", description = "Create a new product. Only MERCHANT users can create products.")
 	@PostMapping
 	public ResponseEntity<ApiResponse<ProductResponse>> create(
-			@RequestBody ProductRequest request
+			@Valid @RequestBody ProductRequest request
 	) {
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.CREATED,
@@ -60,14 +61,14 @@ public class ProductController {
 	@Operation(
 			summary = "Get products with filters",
 			description = """
-                    Get paginated list of products with optional filters:
-                    - search: multi-keyword search on product name (e.g. "vintage hoodie black")
-                    - categories: filter by one or more categories (e.g. categories=Male,Shirt)
-                    - minPrice / maxPrice: filter by price range
-                    - condition: NEW or USED
-                    - isAvailable: true or false
-                    - sort: newest (default), price_asc, price_desc
-                    """
+					Get paginated list of products with optional filters:
+					- search: multi-keyword search on product name (e.g. "vintage hoodie black")
+					- categories: filter by one or more categories (e.g. categories=Male,Shirt)
+					- minPrice / maxPrice: filter by price range
+					- condition: NEW or USED
+					- isAvailable: true or false
+					- sort: newest (default), price_asc, price_desc
+					"""
 	)
 	@GetMapping
 	public ResponseEntity<ApiResponse<List<ProductResponse>>> getProducts(
@@ -91,10 +92,10 @@ public class ProductController {
 
 			@Parameter(
 					description = """
-                            Filter by one or more categories.
-                            Usage: ?categories=Male,Shirt
-                            Backed by enum Categories.
-                            """,
+							Filter by one or more categories.
+							Usage: ?categories=Male,Shirt
+							Backed by enum Categories.
+							""",
 					array = @ArraySchema(schema = @Schema(implementation = Categories.class))
 			)
 			@RequestParam(required = false, name = "categories") List<Categories> categories,
@@ -123,10 +124,13 @@ public class ProductController {
 			)
 			@RequestParam(required = false) Boolean isAvailable,
 
+
 			@Parameter(
-					description = "Sorting options: newest (default), price_asc, price_desc",
-					example = "price_asc"
+					description = "Sorting options: newest (default), price_asc, price_desc, random",
+					example = "random"
 			)
+
+
 			@RequestParam(required = false) String sort
 	) {
 		Page<ProductResponse> result = productService.getProducts(
@@ -144,7 +148,7 @@ public class ProductController {
 	@PutMapping("/{id}")
 	public ResponseEntity<ApiResponse<ProductResponse>> update(
 			@PathVariable Long id,
-			@RequestBody ProductRequest request
+			@Valid @RequestBody ProductRequest request
 	) {
 		return ResponseUtil.buildSingleResponse(
 				HttpStatus.OK,
@@ -213,26 +217,26 @@ public class ProductController {
 		);
 	}
 
-//	merchant product
-@GetMapping("/merchant/{merchantId}")
-public ResponseEntity<ApiResponse<PagedResult<ProductResponse>>> getMerchantProducts(
-		@PathVariable Long merchantId,
-		@RequestParam(defaultValue = "0") int page,
-		@RequestParam(defaultValue = "10") int size,
-		@RequestParam(required = false) String search,
-		@RequestParam(required = false) Boolean available,
-		@RequestParam(required = false) ProductCondition condition,
-		@RequestParam(required = false) Categories category
-) {
-	Page<ProductResponse> result = productService.getMerchantProducts(
-			merchantId, page, size, search, available, condition, category
-	);
+	//	merchant product
+	@GetMapping("/merchant/{merchantId}")
+	public ResponseEntity<ApiResponse<PagedResult<ProductResponse>>> getMerchantProducts(
+			@PathVariable Long merchantId,
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size,
+			@RequestParam(required = false) String search,
+			@RequestParam(required = false) Boolean available,
+			@RequestParam(required = false) ProductCondition condition,
+			@RequestParam(required = false) Categories category
+	) {
+		Page<ProductResponse> result = productService.getMerchantProducts(
+				merchantId, page, size, search, available, condition, category
+		);
 
-	return ResponseUtil.buildSingleResponse(
-			HttpStatus.OK,
-			"Products fetched successfully",
-			PagedResult.from(result)
-	);
-}
+		return ResponseUtil.buildSingleResponse(
+				HttpStatus.OK,
+				"Products fetched successfully",
+				PagedResult.from(result)
+		);
+	}
 
 }

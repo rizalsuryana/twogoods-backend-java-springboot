@@ -34,9 +34,4 @@ public class MerchantRegisterRequest {
 	@NotBlank(message = "Confirm password is required")
 	private String confirmPassword;
 
-
-//	@NotBlank
-//	private String location;
-//	@NotBlank
-//	private String nik; // nomor KTP
 }
