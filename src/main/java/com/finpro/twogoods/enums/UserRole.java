@@ -1,11 +1,11 @@
-package com.finpro.twogoods.entity;
+package com.finpro.twogoods.enums;
 
 import lombok.Getter;
 
 public enum UserRole {
-	ADMIN("admin"),
-	CUSTOMER("customer"),
-	MERCHANT("merchant");
+	ADMIN("ADMIN"),
+	MERCHANT("MERCHANT"),
+	CUSTOMER("CUSTOMER");
 
 	@Getter
 	private final String displayName;
